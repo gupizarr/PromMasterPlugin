@@ -15,3 +15,4 @@ public class ImproveDiscoveryConfiguration {
     this.name = name;
   }
 }
+

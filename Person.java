@@ -1,9 +1,11 @@
 package PromMasterPlugin;
 
+import java.util.ArrayList;
+
 public class Person {
   private Name name;
   private int age;
- 
+  private ArrayList<String> Originators;
   public Person() {
     age = 0;
   }
@@ -22,5 +24,10 @@ public class Person {
  
   public void setAge(int age) {
     this.age = age;
+  }
+  
+  public void setOrigintators(ArrayList<String> Originators)
+  {
+	  Originators=Originators;
   }
 }
