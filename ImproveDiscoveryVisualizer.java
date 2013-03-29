@@ -3,6 +3,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.HashSet;
 
@@ -281,20 +283,39 @@ public class ImproveDiscoveryVisualizer
 		    //Checkbox de grupos humanos
 			JPanel edgesConcurrencyHeaderPanel = new JPanel();
 			
-			for(int u=1;u<10;u++)
-			{
-			edgesConcurrencyActiveBox = new JCheckBox("Group "+u);
+
+			edgesConcurrencyActiveBox = new JCheckBox("Group ");
 			edgesConcurrencyActiveBox.setUI(new SlickerCheckBoxUI());
 			edgesConcurrencyActiveBox.setOpaque(false);
 			edgesConcurrencyActiveBox.setForeground(COLOR_FG);
 			edgesConcurrencyActiveBox.setFont(this.smallFont);
 			//edgesConcurrencyActiveBox.addItemListener(this);
-			edgesConcurrencyActiveBox.setSelected(true);
+			edgesConcurrencyActiveBox.setSelected(false);
 			edgesConcurrencyActiveBox.setToolTipText("<html>This control can be used to switch off<br>"
 					+ "concurrency filtering in the model.</html>");
 			edgesConcurrencyHeaderPanel.add(edgesConcurrencyActiveBox);
+			this.edgesConcurrencyActiveBox.addMouseListener(new MouseListener() {
 
-			}
+				public void mouseClicked(MouseEvent e) {
+					int s=0;
+				}
+
+				public void mouseEntered(MouseEvent e) {
+					int s=0;}
+
+				public void mouseExited(MouseEvent e) {
+					int s=0;}
+
+				public void mousePressed(MouseEvent e) {
+					if(!edgesConcurrencyActiveBox.isSelected())
+					final_view.removeAll();
+				}
+
+				public void mouseReleased(MouseEvent e) {
+					int s=0;}
+			});
+			
+			
 			
 			edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
 			edgesConcurrencyHeaderPanel.setOpaque(false);
