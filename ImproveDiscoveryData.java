@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.processmining.models.heuristics.HeuristicsNet;
 import org.processmining.models.heuristics.HeuristicsNetGraph;
+import org.processmining.models.heuristics.elements.Activity;
 import org.processmining.plugins.heuristicsnet.miner.heuristics.miner.FlexibleHeuristicsMiner;
 import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization.AnnotatedVisualizationSettings;
 
@@ -42,9 +43,9 @@ public class ImproveDiscoveryData {
 	  return HNetGraph;
   }
   
-  public void setHeuristicsNetGraph(HeuristicsNetGraph HNG)
+  public void setHeuristicsNetGraph(HeuristicsNetGraph graph)
   {
-	  this.HNetGraph=HNG;
+	  this.HNetGraph=graph;
   }
     
   
@@ -91,5 +92,11 @@ public class ImproveDiscoveryData {
   public ArrayList<String> GetOriginators()
   {
 	  return Originators;
+  }
+  
+  public void RemoveActivity(Activity activity)
+  {
+	 HNetGraph.removeActivity(activity);
+
   }
 }
