@@ -103,22 +103,13 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 	
 	public ImproveDiscoveryParametersPanel() {
 		// TODO Auto-generated constructor stub
-		//fuzzyview(false);
-		//this.setBorder(BorderFactory.createEmptyBorder());
-		//this.setLayout(new BorderLayout());
-		//this.add(rootPanel, BorderLayout.CENTER);
-	     JLabel label= new JLabel("Hola");
-	     this.add(label);
-			// root panel
-			JPanel rootPanel = new JPanel();
-			rootPanel.setBorder(BorderFactory.createEmptyBorder());
-			rootPanel.setBackground(new Color(100, 100, 100));
-			rootPanel.setLayout(new BorderLayout());
-			rootPanel.setSize(new Dimension(300,200));
-		//this.add(rootPanel);
-		this.setSize(new Dimension(300,400));
-		this.setBounds(1010,20, 300, 400);
-		this.setBackground(Color.red);
+
+		 this.fuzzyview(true);
+		 this.setBounds(1160, 0, 190, 610);
+		 this.setSize(new Dimension(190,610));
+		 this.setBackground(new Color(100,100,100));
+		 this.repaint();
+
 	}
 
 	public JPanel organizationView(boolean group_check)
@@ -402,7 +393,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 
 			
 			// Make the organizational tab
-			JPanel concurrencyParentPanel=organizationView(group_check);
+			JPanel concurrencyParentPanel=this.organizationView(group_check);
 			
 			// assemble slick tab pane
 			StackedCardsTabbedPane tabPane = new StackedCardsTabbedPane();
@@ -411,8 +402,8 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 			tabPane.addTab("Performance perspective", upperControlPanel);
 			tabPane.setActive(2);
 			tabPane.setMinimumSize(new Dimension(190, 220));
-			tabPane.setMaximumSize(new Dimension(190, 10000));
-			tabPane.setPreferredSize(new Dimension(190, 10000));
+			tabPane.setMaximumSize(new Dimension(190, 620));
+			tabPane.setPreferredSize(new Dimension(190, 620));
 			tabPane.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
 			
 
@@ -453,6 +444,8 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 			//		rootPanel.add(sidePanel, BorderLayout.WEST);
 			rootPanel.add(rightPanel, BorderLayout.EAST);
 			//not put the graphPanel in the rootPanel yet
+			
+			this.add(rootPanel);
 
 	}
 

@@ -50,7 +50,7 @@ public class ImproveDiscoveryPlugin {
                   email = "gupizarr@uc.cl",
                   uiLabel = UITopiaVariant.USEPLUGIN)
   @PluginVariant(requiredParameterLabels = {0,2})
-  public  ImproveDiscoveryData procreate(final PluginContext context, final ImproveDiscoveryConfiguration config,XLog log) {
+  public  ImproveDiscoveryData create(final PluginContext context, final ImproveDiscoveryConfiguration config,XLog log) {
     
     ImproveDiscoveryData DiscoveryData = new ImproveDiscoveryData();
     DiscoveryData.setOrigintators(SearchComponents(log));
@@ -75,11 +75,11 @@ public class ImproveDiscoveryPlugin {
                   email = "gupizarr@uc.cl",
                   uiLabel = UITopiaVariant.USEPLUGIN)
   @PluginVariant(requiredParameterLabels = { 0 })
-  public  ImproveDiscoveryData procreate(final UIPluginContext context, XLog log) 
+  public  ImproveDiscoveryData create(final UIPluginContext context, XLog log) 
   {
     ImproveDiscoveryConfiguration config = new ImproveDiscoveryConfiguration("Config");
     
-    return procreate(context,  config,log);
+    return create(context,  config,log);
   }
   
   

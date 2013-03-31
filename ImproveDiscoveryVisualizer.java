@@ -31,8 +31,7 @@ public class ImproveDiscoveryVisualizer  extends HeuristicsNetVisualizer
 	  ProMJGraph jgraph = createJGraph(DiscoveryData.getHeuristicsNetGraph(),new ViewSpecificAttributeMap(), context.getProgress());
 	  
 	  return new ImproveDiscoveryPanel(jgraph,
-			  						   DiscoveryData.getHeuristicNet(),
-			  						   DiscoveryData.getHMinerAVSettings());
+			  						   DiscoveryData,context);
 	 
   }
   
