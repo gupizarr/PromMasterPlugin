@@ -20,8 +20,11 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 
+import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.model.XLog;
 import org.processmining.framework.plugin.PluginContext;
+import org.processmining.models.heuristics.HeuristicsNet;
+import org.processmining.models.heuristics.elements.Activity;
 import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.visualization.ProMJGraphPanel;
 
@@ -98,12 +101,12 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 	//to distinguish whether the log is a transformed log or not
 
 	protected boolean isPatternBasedTransformedLog = false;
-
+    protected HeuristicsNet HNetGraph;
 
 	
-	public ImproveDiscoveryParametersPanel() {
+	public ImproveDiscoveryParametersPanel(HeuristicsNet HNetGraph) {
 		// TODO Auto-generated constructor stub
-
+		 this.HNetGraph=HNetGraph;
 		 this.fuzzyview(true);
 		 this.setBounds(1160, 0, 190, 610);
 		 this.setSize(new Dimension(190,610));
@@ -176,8 +179,13 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 			    //Checkbox de grupos humanos
 				JPanel edgesConcurrencyHeaderPanel = new JPanel();
 				
+				XEventClass[] activities = HNetGraph.getActivitiesMappingStructures().getActivitiesMapping();
+				Activity[] graphActivities = new Activity[activities.length];
 
-				edgesConcurrencyActiveBox = new JCheckBox("Group ");
+				for (int activityIndex = 0; activityIndex < activities.length; activityIndex++) {
+					//adding the activities
+					
+				edgesConcurrencyActiveBox = new JCheckBox(activities[activityIndex].toString());
 				edgesConcurrencyActiveBox.setUI(new SlickerCheckBoxUI());
 				edgesConcurrencyActiveBox.setOpaque(false);
 				edgesConcurrencyActiveBox.setForeground(COLOR_FG);
@@ -186,7 +194,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 				edgesConcurrencyActiveBox.setSelected(group_check);
 				edgesConcurrencyActiveBox.setToolTipText("<html>This control can be used to switch off<br>"
 						+ "concurrency filtering in the model.</html>");
-				edgesConcurrencyHeaderPanel.add(edgesConcurrencyActiveBox);
+				edgesConcurrencyHeaderPanel.add(edgesConcurrencyActiveBox);							
 				this.edgesConcurrencyActiveBox.addMouseListener(new MouseListener() {
 
 					public void mouseClicked(MouseEvent e) {
@@ -207,8 +215,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 					public void mouseReleased(MouseEvent e) {
 						}
 				});
-				
-				
+				}
 				
 				edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
 				edgesConcurrencyHeaderPanel.setOpaque(false);

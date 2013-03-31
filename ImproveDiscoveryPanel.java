@@ -13,13 +13,10 @@ import javax.swing.JPanel;
 
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.framework.plugin.Progress;
-import org.processmining.models.heuristics.HeuristicsNetGraph;
 import org.processmining.models.heuristics.elements.Activity;
 import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.ProMJGraphVisualizer;
 import org.processmining.models.jgraph.visualization.ProMJGraphPanel;
-import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization.AnnotatedVisualizationGenerator;
-import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization.AnnotatedVisualizationSettings;
 
 public class ImproveDiscoveryPanel extends JComponent  {
 
@@ -50,7 +47,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	     this.MainContainer.repaint();
 	     
 	     ModelPanel= new ImproveDiscoveryModelPanel(jgraph,this.DiscoveryData.getHeuristicNet(),this.DiscoveryData.getHMinerAVSettings());
-         ParametersPanel= new ImproveDiscoveryParametersPanel();
+         ParametersPanel= new ImproveDiscoveryParametersPanel(DiscoveryData.getHeuristicNet());
          this.add(ModelPanel);
          this.add(ParametersPanel);
          this.add(this.MainContainer);
@@ -73,21 +70,6 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	}
 	
 
-	public void refresh()
-	{
-		java.util.Iterator<Activity> i1= DiscoveryData.getHeuristicsNetGraph().getActivities().iterator();
-	    Activity a= i1.next();
-	    DiscoveryData.getHeuristicsNetGraph().removeActivity(a);
-	    
-	    
-		AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
-	    AnnotatedVisualizationSettings settings = new AnnotatedVisualizationSettings();
-		HeuristicsNetGraph graph = generator.generate(DiscoveryData.getHeuristicNet(), settings); 
-	    
-		DiscoveryData.setAnnotatedVisualizationSettings(settings);
-		DiscoveryData.setHeuristicsNetGraph(graph);
-
-	}
 
 	public void redrawGraph() {
 
