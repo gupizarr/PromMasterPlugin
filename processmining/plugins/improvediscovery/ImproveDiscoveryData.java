@@ -3,14 +3,17 @@ package org.processmining.plugins.PromMasterPlugin.processmining.plugins.improve
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.deckfour.xes.classification.XEventClass;
 import org.deckfour.xes.classification.XEventClasses;
 import org.deckfour.xes.info.XLogInfo;
 import org.deckfour.xes.info.XLogInfoFactory;
-import org.deckfour.xes.model.XAttribute;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
+import org.deckfour.xes.model.impl.XAttributeMapImpl;
+import org.deckfour.xes.model.impl.XAttributeMapLazyImpl;
+import org.deckfour.xes.model.impl.XEventImpl;
+import org.deckfour.xes.model.impl.XLogImpl;
+import org.deckfour.xes.model.impl.XTraceImpl;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.graphbased.directed.socialnetwork.SocialNetwork;
 import org.processmining.models.heuristics.HeuristicsNet;
@@ -45,6 +48,7 @@ public class ImproveDiscoveryData {
   private ArrayList<String> RemovedResources;
   private ArrayList<String> Activities;
   private ArrayList<XTrace> Traces;
+  private boolean fixLog=false;
   
   public ImproveDiscoveryData(XLog log, final PluginContext context) {
 	
@@ -64,69 +68,80 @@ public class ImproveDiscoveryData {
 
   }
   
+  public boolean GetFixCase()
+  {
+	  return fixLog;
+  }
   public void setContext(PluginContext context)
   {
    this.context=context;
   }
   
-public void QueTareasCorresponden()
+  public void FixLog()
   {
-  for(int u=0; u< this.transformLog.size(); u++)
-  {  
-	  
-	  for( int j=0 ; j<this.transformLog.get(u).size();j++)
-	  {	
-	  XEventClass c = this.OriginallogInfo.getEventClasses().getClassOf(this.transformLog.get(u).get(j));
-	  System.out.print("\n"+ c.getId());
-	  }
-  }
-  }
-  
-  public void queEventosTieneElLogInfo(XLogInfo info)
-  {
-	  for( int j=0 ; j<info.getEventClasses().size();j++)
+	  fixLog=false;
+	  int count=0;
+	  for(int j=0;j<this.transformLog.size();j++)
 	  {
-		  System.out.print("\n"+ info.getEventClasses().getByIndex(j).getId());
+		  if(transformLog.get(j).size()==1)
+		  {
+			  count++;
+		  }
 	  }
- }
-  
-  
-  public void ShowLogAttributes()
-  {
-	  XLogInfo Info=XLogInfoFactory.createLogInfo(this.transformLog);
-	  
-	  //this.transformLog.setAttributes(arg0);
-	  Iterator<XAttribute> b=this.transformLog.getAttributes().values().iterator();
-	  //Iterator<XAttribute> a=this.transformLog.getGlobalEventAttributes().iterator();
-
-
-
+	  if(this.transformLog.size()==count)
+	  {
+		  for(int j=0;j<this.transformLog.size();j++)
+		  {
+			  XEvent event= new XEventImpl();
+			  transformLog.get(j).add(event);
+		  }
+		  fixLog=true;
+		  
+		  
+	  }
   }
+
   public void UpdateGraph()
   {
-	  transformLog.clear();
-	  transformLog.addAll(Traces);
-	
-	  for(int j=0; j< transformLog.getClassifiers().size();j++)
+	  this.transformLog= new XLogImpl(new XAttributeMapLazyImpl<XAttributeMapImpl>(XAttributeMapImpl.class));
+	  this.transformLog.addAll(Traces);
+	  
+	  if(!transformLog.isEmpty() && transformLog.get(0).size()==1)
 	  {
-		  
-		  System.out.print("\n "+ transformLog.getClassifiers().get(j).toString());	
+	  FixLog();
 	  }
-
+	  if(transformLog.size()==0)
+	  {
+		  XTrace trace= new XTraceImpl(new XAttributeMapImpl());
+		  XEvent event= new XEventImpl();
+		  trace.add(event);
+		  transformLog.add(trace);
+	  }
+	  if(transformLog.size()>0)
+	  {
 	  XLogInfo Info=XLogInfoFactory.createLogInfo(this.transformLog);
-	  //ShowLogAttributes();  
 	  System.out.print("\n Quedaron trazas : "+this.transformLog.size());
 	  HeuristicsMiner fhm = new HeuristicsMiner(context, transformLog,Info ); 
-	  this.HNet= fhm.mine();
-	 
-	  this.HNetSettings.setShowingUnconnectedTasks(true);
-	  //queEventosTieneElLogInfo(Info);
+	  this.HNet= fhm.mine(); 
 
+      this.HNetSettings.setShowingUnconnectedTasks(true);
 	  AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
 	  this.HNetSettings=new AnnotatedVisualizationSettings();
+	  this.HNetGraph= generator.generate(HNet, this.HNetSettings);
+	  
 	
-	  this.HNetGraph= generator.generate(HNet, this.HNetSettings); 
-	
+	  
+	  }
+	  else
+	  {
+		  ArrayList<Activity> act= new ArrayList<Activity>();
+	      Iterator<Activity> activities = this.HNetGraph.getActivities().iterator();
+	      while(activities.hasNext()) {
+	         act.add(activities.next());
+	      }
+
+		  this.HNetGraph.getActivities().removeAll(act);
+	  }
 		
   }
   public void RemoveTrace(XTrace trace)
@@ -171,9 +186,10 @@ public void QueTareasCorresponden()
         	    remove= new XEvent[trace.size()];
            	    if(trace.size()>0)
         	    {
+           	 
 						for (XEvent event : trace) 
 						{		
-		        	     resource= this.OriginallogInfo.getResourceClasses().getClassOf(event).getId();
+		        	     resource=XLogInfoFactory.createLogInfo(this.transformLog).getResourceClasses().getClassOf(event).getId();
 				     			if(resource.equals(RemovedResources.get(j)))
 				     			{
 				     				     		remove[count]=event;

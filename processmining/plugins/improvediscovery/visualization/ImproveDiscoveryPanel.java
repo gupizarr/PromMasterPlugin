@@ -5,12 +5,14 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.Iterator;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import org.processmining.framework.plugin.PluginContext;
+import org.processmining.models.heuristics.elements.Activity;
 import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.ProMJGraphVisualizer;
 import org.processmining.models.jgraph.visualization.ProMJGraphPanel;
@@ -150,8 +152,19 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		} 
 		if (comparator_panel == null) {
 				
+		    if(DiscoveryData.GetFixCase())
+		    {
+				Iterator<Activity> iterador= this.DiscoveryData.getHeuristicsNetGraph().getActivities().iterator();
+				
+				Activity ac= iterador.next();
+				this.DiscoveryData.getHeuristicsNetGraph().removeActivity(ac);  
+		
+			}
 			    comparator_panel=ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(DiscoveryData.getHeuristicsNetGraph());
-				comparator_panel.setAutoscrolls(false);
+			    
+
+			    
+			    comparator_panel.setAutoscrolls(false);
 				comparator_panel.setBounds(0, 250,950 ,350);
 				comparator_panel.setSize(new Dimension(950,350));
 				comparator_panel.setPreferredSize(new Dimension(950,350));
