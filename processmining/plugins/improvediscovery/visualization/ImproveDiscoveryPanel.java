@@ -17,6 +17,8 @@ import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.ProMJGraphVisualizer;
 import org.processmining.models.jgraph.visualization.ProMJGraphPanel;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryData;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
+import org.processmining.plugins.socialnetwork.analysis.SocialNetworkAnalysisUI;
 
 
 public class ImproveDiscoveryPanel extends JComponent  {
@@ -31,13 +33,16 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	private JPanel MainContainer;
 	private PluginContext context;
 	private ProMJGraphPanel comparator_panel;
+	private SocialNetworkAnalysisUI SNPanel;
+	private ImproveDiscoveryTransformation transformationTraceAlign;
      
 
 	public ImproveDiscoveryPanel(final ProMJGraph jgraph,
 			final ImproveDiscoveryData DiscoveryData,final PluginContext context) {
-		
+		 
+		 // tracealign
 		 //SOCIAL 
-		 //this.SNPanel=new SocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());
+		 this.SNPanel=new SocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());
 		 
 		 this.context=context;
 		 this.DiscoveryData=DiscoveryData;
@@ -52,13 +57,16 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	     ParametersPanel= new ImproveDiscoveryParametersPanel(DiscoveryData);
          this.add(ModelPanel);
          this.add(ParametersPanel);
+         this.SNPanel.setSize(new Dimension(400,400));
+         this.SNPanel.setBounds(200, 0, 800,500);
+         this.SNPanel.setBackground(Color.CYAN);
+         this.add(this.SNPanel);
          
-
 	     this.add(this.MainContainer);
 
          
          AddCheckBoxesEvent();
-         
+         //AddCheckBoxesClusterEvents();
 
 		// TODO Auto-generated constructor stub
 	}
@@ -100,6 +108,36 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	}
 */
 	}
+    
+	public void AddCheckBoxesClusterEvents()
+	{
+		for(int u=0;u<ParametersPanel.ClusteredgesConcurrencyActiveBox.length;u++)
+    	{
+    		
+    		this.ParametersPanel.ClusteredgesConcurrencyActiveBox[u].addMouseListener(new MouseListener() {
+
+			public void mouseClicked(MouseEvent e) {
+			;
+			}
+
+			public void mouseEntered(MouseEvent e) {
+			    }
+
+			public void mouseExited(MouseEvent e) {
+				}
+
+			public void mousePressed(MouseEvent e) {
+				
+				JCheckBox check=(JCheckBox) e.getComponent();
+				redrawGraphWithClusters(check.getName(),check.isSelected());
+		
+			}
+			public void mouseReleased(MouseEvent e) {
+				}
+		});
+    	}
+	}
+	
     public void AddCheckBoxesEvent()
     {
     	for(int u=0;u<ParametersPanel.edgesConcurrencyActiveBox.length;u++)
@@ -130,7 +168,52 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		});
 		}
     }
+    
+	public void redrawGraphWithClusters(String number,boolean remove)
+	{
+		DiscoveryData.setContext(context);
+		
+		if(remove)
+		{
+             DiscoveryData.ClusterFilter(number);
+ 	    }
+		else
+		{
+			//DiscoveryData.AddSocialGroup(id);
+		}
+		
+		if (comparator_panel!= null) {
+			this.remove(comparator_panel);
+			comparator_panel = null;
+			this.revalidate();
 
+		} 
+		if (comparator_panel == null) {
+				
+		    if(DiscoveryData.GetFixCase())
+		    {
+				Iterator<Activity> iterador= this.DiscoveryData.getHeuristicsNetGraph().getActivities().iterator();
+				
+				Activity ac= iterador.next();
+				this.DiscoveryData.getHeuristicsNetGraph().removeActivity(ac);  
+		
+			}
+			    comparator_panel=ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(DiscoveryData.getHeuristicsNetGraph());
+			    
+
+			    
+			    comparator_panel.setAutoscrolls(false);
+				comparator_panel.setBounds(0, 250,950 ,350);
+				comparator_panel.setSize(new Dimension(950,350));
+				comparator_panel.setPreferredSize(new Dimension(950,350));
+				comparator_panel.setBackground(Color.orange);
+			    
+				this.add(comparator_panel);
+				this.revalidate();
+		
+		        
+		}
+	}
 	public void redrawGraph(String id,boolean remove) {
 
 		DiscoveryData.setContext(context);

@@ -10,7 +10,6 @@ import java.util.HashSet;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -27,7 +26,6 @@ import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improved
 import com.fluxicon.slickerbox.components.InspectorButton;
 import com.fluxicon.slickerbox.components.StackedCardsTabbedPane;
 import com.fluxicon.slickerbox.ui.SlickerCheckBoxUI;
-import com.fluxicon.slickerbox.ui.SlickerRadioButtonUI;
 import com.fluxicon.slickerbox.ui.SlickerSliderUI;
 
 
@@ -86,6 +84,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 	protected JCheckBox edgesFuzzyIgnoreLoopBox;
 	protected JCheckBox edgesFuzzyInterpretAbsoluteBox;
 	protected JCheckBox[] edgesConcurrencyActiveBox;
+	protected JCheckBox[] ClusteredgesConcurrencyActiveBox;
 	
 	protected Color COLOR_BG = new Color(60, 60, 60);
 	protected Color COLOR_BG2 = new Color(120, 120, 120);
@@ -104,7 +103,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 		// TODO Auto-generated constructor stub
 		
 		 this.DataDiscovery=DataDiscovery;
-		 edgesConcurrencyActiveBox= new JCheckBox[DataDiscovery.Resources.length];
+		 ClusteredgesConcurrencyActiveBox= new JCheckBox[DataDiscovery.getTraceAlignTransformation().GetClusters().size()];
 		 this.fuzzyview(true);
 		 this.setBounds(1160, 0, 190, 610);
 		 this.setSize(new Dimension(190,610));
@@ -120,7 +119,62 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 		return label;
 	}
 	
-	public JPanel organizationView(boolean group_check)
+	public JPanel ClustersParameters(boolean clusterCheck)
+	{
+		// concurrency edge transformer slider panel
+		JPanel concurrencySliderPanel = new JPanel();
+		concurrencySliderPanel.setOpaque(false);
+		concurrencySliderPanel.setLayout(new BoxLayout(concurrencySliderPanel, BoxLayout.X_AXIS));
+		
+		// concurrency edge preserve threshold slider panel
+		JPanel concurrencyPreservePanel = new JPanel();
+		concurrencyPreservePanel.setOpaque(false);
+		concurrencyPreservePanel.setLayout(new BorderLayout());
+		
+
+		// setup concurrency parent panel
+		JPanel concurrencyParentPanel = new JPanel();
+		concurrencyParentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		concurrencyParentPanel.setBackground(COLOR_BG2);
+		concurrencyParentPanel.setOpaque(true);
+		concurrencyParentPanel.setLayout(new BorderLayout());
+		
+	    //Checkbox de grupos humanos
+		JPanel edgesConcurrencyHeaderPanel = new JPanel();
+	    int num=1;
+		for(int count=0; count<DataDiscovery.getTraceAlignTransformation().GetClusters().size();count++) {
+	
+			//adding the activities
+		num+=1;
+		ClusteredgesConcurrencyActiveBox[count] = new JCheckBox("Cluster "+num);
+		ClusteredgesConcurrencyActiveBox[count].setUI(new SlickerCheckBoxUI());
+		ClusteredgesConcurrencyActiveBox[count].setOpaque(false);
+		ClusteredgesConcurrencyActiveBox[count].setForeground(COLOR_FG);
+		ClusteredgesConcurrencyActiveBox[count].setFont(this.smallFont);
+		//edgesConcurrencyActiveBox.addItemListener(this);
+		ClusteredgesConcurrencyActiveBox[count].setSelected(clusterCheck);
+		ClusteredgesConcurrencyActiveBox[count].setToolTipText("<html>This control select the clusters of the model" +
+				"visualization</html>");
+		
+		//agrego Id para identificarlo
+		
+		ClusteredgesConcurrencyActiveBox[count].setName(""+DataDiscovery.getTraceAlignTransformation().GetClusters().get(count));
+		
+		edgesConcurrencyHeaderPanel.add(ClusteredgesConcurrencyActiveBox[count]);	
+		
+		}
+		
+		edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
+		edgesConcurrencyHeaderPanel.setOpaque(false);
+		edgesConcurrencyHeaderPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
+		edgesConcurrencyHeaderPanel.add(Box.createVerticalGlue());
+		concurrencyParentPanel.add(edgesConcurrencyHeaderPanel, BorderLayout.NORTH);
+		concurrencyParentPanel.add(concurrencySliderPanel, BorderLayout.CENTER);
+		
+		return concurrencyParentPanel;
+	}
+	
+    public JPanel organizationView(boolean group_check)
 	{
 		// concurrency edge transformer slider panel
 				JPanel concurrencySliderPanel = new JPanel();
@@ -183,7 +237,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 				
 			    //Checkbox de grupos humanos
 				JPanel edgesConcurrencyHeaderPanel = new JPanel();
-			 
+				edgesConcurrencyActiveBox= new JCheckBox[DataDiscovery.Resources.length];
 				for(int count=0; count<DataDiscovery.Resources.length;count++) {
 			
 					//adding the activities
@@ -254,139 +308,9 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 					+ "events are shown as single activities,<br>" + "increasing the detail and complexity<br>"
 					+ "of the model.</html>");
 			upperControlPanel.add(nodeSignificanceSlider, BorderLayout.CENTER);
-			//start  of the "Edge filter" panel
-			// lower edge transformer panel
-			JPanel lowerControlPanel = new JPanel(); // lowerControlPanel is the Edge filter panel
-			lowerControlPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-			lowerControlPanel.setBackground(COLOR_BG2);
-			lowerControlPanel.setOpaque(true);
-			lowerControlPanel.setLayout(new BorderLayout());
-			// lower header panel (radio buttons etc.)
-			JPanel lowerHeaderPanel = new JPanel();
-			lowerHeaderPanel.setOpaque(false);
-			lowerHeaderPanel.setLayout(new BoxLayout(lowerHeaderPanel, BoxLayout.Y_AXIS));
-			JLabel lowerHeaderLabel = new JLabel("Edge transformer");
-			lowerHeaderLabel.setOpaque(false);
-			lowerHeaderLabel.setForeground(COLOR_FG);
-			lowerHeaderLabel.setFont(this.smallFont);
-			//centerHorizontally(lowerHeaderLabel);
-			edgesBestRadioButton = new JRadioButton("Best edges");
-			edgesBestRadioButton.setUI(new SlickerRadioButtonUI());
-			edgesBestRadioButton.setFont(this.smallFont);
-			edgesBestRadioButton.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 2));
-			edgesBestRadioButton.setOpaque(false);
-			edgesBestRadioButton.setForeground(COLOR_FG);
-			edgesBestRadioButton.setAlignmentX(JRadioButton.LEFT_ALIGNMENT);
-			edgesBestRadioButton.setHorizontalAlignment(JRadioButton.LEFT);
-			//edgesBestRadioButton.addItemListener(this);
-			edgesBestRadioButton.setToolTipText("<html>Activates the 'Best edges'<br>"
-					+ "edge filtering strategy, which<br>" + "preserves for each node the two most<br>"
-					+ "significant connections.</html>");
-			edgesFuzzyRadioButton = new JRadioButton("Fuzzy edges");
-			edgesFuzzyRadioButton.setUI(new SlickerRadioButtonUI());
-			edgesFuzzyRadioButton.setFont(this.smallFont);
-			edgesFuzzyRadioButton.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 2));
-			edgesFuzzyRadioButton.setOpaque(false);
-			edgesFuzzyRadioButton.setForeground(COLOR_FG);
-			edgesFuzzyRadioButton.setAlignmentX(JRadioButton.LEFT_ALIGNMENT);
-			edgesFuzzyRadioButton.setHorizontalAlignment(JRadioButton.LEFT);
-			//edgesFuzzyRadioButton.addItemListener(this);
-			edgesFuzzyRadioButton.setToolTipText("<html>Activates the 'Fuzzy edges'<br>"
-					+ "edge filtering strategy, which is<br>" + "based on the utility value of each<br>"
-					+ "edge for any node.</html>");
-			ButtonGroup radioEdgesGroup = new ButtonGroup();
-			radioEdgesGroup.add(edgesBestRadioButton);
-			radioEdgesGroup.add(edgesFuzzyRadioButton);
-			lowerHeaderPanel.add(lowerHeaderLabel);
-			lowerHeaderPanel.add(Box.createVerticalStrut(2));
-			lowerHeaderPanel.add(edgesBestRadioButton);
-			lowerHeaderPanel.add(edgesFuzzyRadioButton);
-			lowerHeaderPanel.add(Box.createVerticalStrut(5));
-			// lower slider parent panel
-			JPanel lowerSliderPanel = new JPanel();
-			lowerSliderPanel.setOpaque(false);
-			lowerSliderPanel.setLayout(new BoxLayout(lowerSliderPanel, BoxLayout.X_AXIS));
-			// lower ratio slider panel
-			JPanel fuzzyRatioPanel = new JPanel();
-			fuzzyRatioPanel.setOpaque(false);
-			fuzzyRatioPanel.setLayout(new BorderLayout());
-			JLabel fuzzyRatioHeader = new JLabel("Utility rt.");
-			fuzzyRatioHeader.setFont(this.smallFont);
-			fuzzyRatioHeader.setOpaque(false);
-			fuzzyRatioHeader.setForeground(COLOR_FG);
-			centerHorizontally(fuzzyRatioHeader);
-			edgesFuzzyRatioSlider = new JSlider(JSlider.VERTICAL, 0, 1000, 0);
-			edgesFuzzyRatioSlider.setUI(new SlickerSliderUI(edgesFuzzyRatioSlider));
-			edgesFuzzyRatioSlider.setOpaque(false);
-			//edgesFuzzyRatioSlider.addChangeListener(this);
-			edgesFuzzyRatioSlider.setToolTipText("<html>Controls the utility ratio used<br>"
-					+ "for edge filtering. A higher value will<br>" + "give more preference to edges' significance,<br>"
-					+ "lower value prefers correlation.</html>");
-			edgesFuzzyRatioLabel = new JLabel("0.000");
-			centerHorizontally(edgesFuzzyRatioLabel);
-			edgesFuzzyRatioLabel.setSize(new Dimension(100, 25));
-			edgesFuzzyRatioLabel.setForeground(COLOR_FG);
-			edgesFuzzyRatioLabel.setFont(this.smallFont);
-			fuzzyRatioPanel.add(packVerticallyCentered(fuzzyRatioHeader, 60, 20), BorderLayout.NORTH);
-			fuzzyRatioPanel.add(edgesFuzzyRatioSlider, BorderLayout.CENTER);
-			fuzzyRatioPanel.add(packVerticallyCentered(edgesFuzzyRatioLabel, 40, 20), BorderLayout.SOUTH);
-			// lower percentage slider panel
-			JPanel fuzzyPercentagePanel = new JPanel();
-			fuzzyPercentagePanel.setOpaque(false);
-			fuzzyPercentagePanel.setLayout(new BorderLayout());
-			JLabel fuzzyPercentageHeader = new JLabel("Cutoff");
-			fuzzyPercentageHeader.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-			fuzzyPercentageHeader.setOpaque(false);
-			fuzzyPercentageHeader.setForeground(COLOR_FG);
-			fuzzyPercentageHeader.setFont(this.smallFont);
-			centerHorizontally(fuzzyPercentageHeader);
-			edgesFuzzyPercentageSlider = new JSlider(JSlider.VERTICAL, 0, 1000, 0);
-			edgesFuzzyPercentageSlider.setUI(new SlickerSliderUI(edgesFuzzyPercentageSlider));
-			edgesFuzzyPercentageSlider.setOpaque(false);
-			//edgesFuzzyPercentageSlider.addChangeListener(this);
-			edgesFuzzyPercentageSlider.setToolTipText("<html>Determines the minimal utility for<br>"
-					+ "an edge to be included, with a larger value<br>" + "allowing more edges to be displayed, thus<br>"
-					+ "increasing the detail of the model.</html>");
-			edgesFuzzyPercentageLabel = new JLabel("0.000");
-			edgesFuzzyPercentageLabel.setForeground(COLOR_FG);
-			edgesFuzzyPercentageLabel.setSize(new Dimension(100, 25));
-			edgesFuzzyPercentageLabel.setFont(this.smallFont);
-			centerHorizontally(edgesFuzzyPercentageLabel);
-			fuzzyPercentagePanel.add(packVerticallyCentered(fuzzyPercentageHeader, 40, 20), BorderLayout.NORTH);
-			fuzzyPercentagePanel.add(edgesFuzzyPercentageSlider, BorderLayout.CENTER);
-			fuzzyPercentagePanel.add(packVerticallyCentered(edgesFuzzyPercentageLabel, 40, 20), BorderLayout.SOUTH);
-			// assemble lower slider panel
-			lowerSliderPanel.add(fuzzyPercentagePanel);
-			lowerSliderPanel.add(fuzzyRatioPanel);
-			// assemble check box panel
-			JPanel lowerSettingsPanel = new JPanel();
-			lowerSettingsPanel.setOpaque(false);
-			lowerSettingsPanel.setLayout(new BoxLayout(lowerSettingsPanel, BoxLayout.Y_AXIS));
-			edgesFuzzyIgnoreLoopBox = new JCheckBox("ignore self-loops");
-			edgesFuzzyIgnoreLoopBox.setUI(new SlickerCheckBoxUI());
-			edgesFuzzyIgnoreLoopBox.setOpaque(false);
-			edgesFuzzyIgnoreLoopBox.setForeground(COLOR_FG);
-			edgesFuzzyIgnoreLoopBox.setFont(this.smallFont);
-			//edgesFuzzyIgnoreLoopBox.addItemListener(this);
-			edgesFuzzyIgnoreLoopBox.setToolTipText("<html>If active, length-1-loops (i.e.,<br>"
-					+ "repeptitions of one event) will not be,<br>" + "taken into account when filtering edges.</html>");
-			edgesFuzzyInterpretAbsoluteBox = new JCheckBox("interpret absolute");
-			edgesFuzzyInterpretAbsoluteBox.setUI(new SlickerCheckBoxUI());
-			edgesFuzzyInterpretAbsoluteBox.setOpaque(false);
-			edgesFuzzyInterpretAbsoluteBox.setForeground(COLOR_FG);
-			edgesFuzzyInterpretAbsoluteBox.setFont(this.smallFont);
-			//edgesFuzzyInterpretAbsoluteBox.addItemListener(this);
-			edgesFuzzyInterpretAbsoluteBox.setToolTipText("<html>If active, all edges' utility value<br>"
-					+ "must exceed the cutoff globally, i.e. in an<br>"
-					+ "absolute way, rather than locally, i.e. in a<br>" + "relative way.</html>");
-			lowerSettingsPanel.add(edgesFuzzyIgnoreLoopBox);
-			lowerSettingsPanel.add(edgesFuzzyInterpretAbsoluteBox);
-			// assemble lower control panel
-			lowerControlPanel.add(lowerHeaderPanel, BorderLayout.NORTH);
-			lowerControlPanel.add(lowerSliderPanel, BorderLayout.CENTER);
-			lowerControlPanel.add(lowerSettingsPanel, BorderLayout.SOUTH);
-			//end of the "Edge filter" panel
-
+            
+			//ClusgerParameters
+            JPanel lowerControlPanel=ClustersParameters(true);
 			
 			// Make the organizational tab
 			JPanel concurrencyParentPanel=this.organizationView(group_check);

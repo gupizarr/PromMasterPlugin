@@ -2,10 +2,12 @@ package org.processmining.plugins.PromMasterPlugin.processmining.plugins.improve
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.deckfour.xes.classification.XEventClasses;
 import org.deckfour.xes.info.XLogInfo;
 import org.deckfour.xes.info.XLogInfoFactory;
+import org.deckfour.xes.model.XAttributeMap;
 import org.deckfour.xes.model.XEvent;
 import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
@@ -45,13 +47,20 @@ public class ImproveDiscoveryData {
   public String[] Resources;
   private ArrayList<String> Events;
   private PluginContext context;
+  
   private ArrayList<String> RemovedResources;
+  private ArrayList<String> RemovedClusters;
+  
   private ArrayList<String> Activities;
+  private List<List<List<List<String>>>> Clusters;
   private ArrayList<XTrace> Traces;
   private boolean fixLog=false;
+  private ImproveDiscoveryTransformation transformationTraceAlign;
   
   public ImproveDiscoveryData(XLog log, final PluginContext context) {
 	
+	this.transformationTraceAlign = new ImproveDiscoveryTransformation(log);
+    this.Clusters= this.transformationTraceAlign.GetProcessAlig();
 	  Traces= new ArrayList<XTrace>();
 	//Activities= new ArrayList<String,String>();
 	RemovedResources= new ArrayList<String>();
@@ -66,6 +75,11 @@ public class ImproveDiscoveryData {
 	Resources[k] = resources_events.getByIndex(k).toString();
 	}
 
+  }
+  
+  public ImproveDiscoveryTransformation getTraceAlignTransformation()
+  {
+	  return this.transformationTraceAlign;
   }
   
   public boolean GetFixCase()
@@ -110,13 +124,15 @@ public class ImproveDiscoveryData {
 	  {
 	  FixLog();
 	  }
+	  
 	  if(transformLog.size()==0)
-	  {
+	  {	
 		  XTrace trace= new XTraceImpl(new XAttributeMapImpl());
 		  XEvent event= new XEventImpl();
 		  trace.add(event);
 		  transformLog.add(trace);
 	  }
+	  
 	  if(transformLog.size()>0)
 	  {
 	  XLogInfo Info=XLogInfoFactory.createLogInfo(this.transformLog);
@@ -128,9 +144,7 @@ public class ImproveDiscoveryData {
 	  AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
 	  this.HNetSettings=new AnnotatedVisualizationSettings();
 	  this.HNetGraph= generator.generate(HNet, this.HNetSettings);
-	  
-	
-	  
+	  		  
 	  }
 	  else
 	  {
@@ -161,6 +175,67 @@ public class ImproveDiscoveryData {
      RemovedResources.remove(resource);
 	 SocialFilter("");
   }
+  
+  public void ClusterFilter(String cluster)
+  {
+	  Traces.clear();
+	  String alignName; 
+	  int count=0;
+	  int current_event=0;
+	  ArrayList<XTrace> Traces= new ArrayList<XTrace>();
+		XAttributeMap attributeMap;
+
+	    if(!RemovedClusters.contains(cluster))
+	    {
+		RemovedClusters.add(cluster);
+	    }
+	    for(int j=0;j<this.RemovedClusters.size();j++)
+	    {
+	    	//Comienza el Cluster seleccionado
+	    	count=Integer.parseInt(RemovedClusters.get(j));
+	    	for(int c=0;c<this.Clusters.get(count).size();c++)
+	    	{
+	    	//Comienza el trace	
+	    		for(int s=0;s<this.Clusters.get(count).get(c).size();s++)
+	    		{  
+	    			 count=0;
+	    			//Comienzan las actividades
+	    			  for (int u=0; u<this.transformLog.size(); u++)
+	    			  {
+	    	      
+	    	        	  XTrace trace = this.transformLog.get(u); 
+	    	            	
+	    	        	  
+	    	        	    //remove= new XEvent[trace.size()];
+	    	           	    if(trace.size()>0)
+	    	        	    {
+	    	           	    		current_event=0;
+	    							for (XEvent event : trace) 
+	    							{	
+	    								attributeMap = event.getAttributes();
+	    								alignName=attributeMap.get("concept:name").toString() + "-"
+	    										+ attributeMap.get("lifecycle:transition").toString();
+	    								if(current_event==u && !alignName.equals(this.Clusters.get(count).get(c).get(s)))
+	    								{	    									
+    									count++;
+	    								}
+	    								current_event++;
+	    							}
+
+	    	        	    }
+							if(count==trace.size())
+							{
+								Traces.add(trace);
+							}
+	    			  }
+	    			 
+	    			  this.transformLog.removeAll(Traces);
+	    		}
+	    	}
+	    }
+	      UpdateGraph();
+  }
+  
   public void SocialFilter(String Rols)
   {
 	    Traces.clear();
@@ -230,14 +305,8 @@ public class ImproveDiscoveryData {
        	  Traces.add(transformLog.get(s));
          }
 
-         System.out.print("\n Se borraron:"+elementos_borrados+"eventos y quedan "+Traces.size()+" de "+this.transformLog.size()+  " Trazas");
-   	
-
-    
-    		 // System.out.print("No hay roles y el numero de trazas es: "+this.transformLog.size());
-    	  
-		  //MostrarFiltrados();
-			
+         System.out.print("\n Se borraron:"+elementos_borrados+"  eventos y quedan "+Traces.size()+" de "+this.transformLog.size()+  " Trazas");
+ 		
           UpdateGraph();
 	}
   
@@ -364,4 +433,6 @@ public class ImproveDiscoveryData {
 	 HNetGraph.removeActivity(activity);
 
   }
+  
+
 }

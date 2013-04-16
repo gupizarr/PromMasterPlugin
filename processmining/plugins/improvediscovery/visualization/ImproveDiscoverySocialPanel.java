@@ -9,7 +9,7 @@ public class ImproveDiscoverySocialPanel {
 	
 	public ImproveDiscoverySocialPanel() {
 		// TODO Auto-generated constructor stub
-		
+	  	
 	}
 
 }
