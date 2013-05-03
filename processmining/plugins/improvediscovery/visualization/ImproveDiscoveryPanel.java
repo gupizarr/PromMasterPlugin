@@ -3,6 +3,8 @@ package org.processmining.plugins.PromMasterPlugin.processmining.plugins.improve
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Iterator;
@@ -10,6 +12,8 @@ import java.util.Iterator;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.heuristics.elements.Activity;
@@ -17,11 +21,10 @@ import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.ProMJGraphVisualizer;
 import org.processmining.models.jgraph.visualization.ProMJGraphPanel;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryData;
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
 import org.processmining.plugins.socialnetwork.analysis.SocialNetworkAnalysisUI;
 
 
-public class ImproveDiscoveryPanel extends JComponent  {
+public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener, ItemListener{
 
 	/**
 	 * 
@@ -34,7 +37,6 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	private PluginContext context;
 	private ProMJGraphPanel comparator_panel;
 	private SocialNetworkAnalysisUI SNPanel;
-	private ImproveDiscoveryTransformation transformationTraceAlign;
      
 
 	public ImproveDiscoveryPanel(final ProMJGraph jgraph,
@@ -42,7 +44,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		 
 		 // tracealign
 		 //SOCIAL 
-		 this.SNPanel=new SocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());
+		 //this.SNPanel=new SocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());
 		 
 		 this.context=context;
 		 this.DiscoveryData=DiscoveryData;
@@ -55,60 +57,35 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	     
 	     ModelPanel= new ImproveDiscoveryModelPanel(jgraph,this.DiscoveryData.getHeuristicNet(),this.DiscoveryData.getHMinerAVSettings()); 
 	     ParametersPanel= new ImproveDiscoveryParametersPanel(DiscoveryData);
-         this.add(ModelPanel);
+         ParametersPanel.maxTimeSlider.addChangeListener(this);
+         ParametersPanel.minTimeSlider.addChangeListener(this);
+	     this.add(ModelPanel);
          this.add(ParametersPanel);
-         this.SNPanel.setSize(new Dimension(400,400));
-         this.SNPanel.setBounds(200, 0, 800,500);
-         this.SNPanel.setBackground(Color.CYAN);
-         this.add(this.SNPanel);
+         //this.SNPanel.setSize(new Dimension(400,400));
+         //this.SNPanel.setBounds(200, 0, 800,500);
+         //this.SNPanel.setBackground(Color.CYAN);
+         //this.add(this.SNPanel);
          
 	     this.add(this.MainContainer);
 
          
          AddCheckBoxesEvent();
+         AddPerformanceEvents();
          //AddCheckBoxesClusterEvents();
 
 		// TODO Auto-generated constructor stub
 	}
 	
 	public void UpdateDiagram()
-	{
-/*
-		this.context = context;
-		this.bpmn = bpmn;
-		this.proMJGraphPanel = ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(bpmn);
-		this.viewSpecificMap = proMJGraphPanel.getGraph().getViewSpecificAttributes();
-       
-		String message = "";
-		ConnectionManager conn = context.getConnectionManager();
-		try {
-			message = "BPMNAnalysisConnection";
-			BPMNAnalysisConnection BPMNConnection = conn
-					.getFirstConnection(BPMNAnalysisConnection.class, context, bpmn);
+	{      
 
-			BPMNAnalysisDataList BPMNAnalysisList = (BPMNAnalysisDataList) BPMNConnection
-					.getObjectWithRole(BPMNAnalysisConnection.BPMNAnalysisList);
-
-			this.flex = (Flex) BPMNConnection.getObjectWithRole(BPMNAnalysisConnection.FLEX);
-
-			message = "FlexCodecConnection";
-			FlexCodecConnection codecConn = conn.getFirstConnection(FlexCodecConnection.class, context, flex);
-			this.codec = (FlexCodec) codecConn.getObjectWithRole(FlexCodecConnection.FLEXCODEC);
-
-			firstBPMNAnalysisData = BPMNAnalysisList.get(0);
-			this.selectedBPMNAnalysisData = firstBPMNAnalysisData;
-			fillFlexBPMNNodeEdgeMappings(bpmn, flex
-			initVisualization(BPMNAnalysisList, proMJGraphPanel);
-			updatePanelsAndColorModel();
-		} catch (ConnectionCannotBeObtained e) {
-			e.printStackTrace();
-			System.out.println("Exception occured while obtaining " + message);
-		}
-
-	}
-*/
 	}
     
+	public void AddPerformanceEvents()
+	{
+		
+	}
+	
 	public void AddCheckBoxesClusterEvents()
 	{
 		for(int u=0;u<ParametersPanel.ClusteredgesConcurrencyActiveBox.length;u++)
@@ -138,6 +115,12 @@ public class ImproveDiscoveryPanel extends JComponent  {
     	}
 	}
 	
+	public void stateChanged(ChangeEvent evt) {
+		if (evt.getSource() == ParametersPanel.maxTimeSlider || evt.getSource() == ParametersPanel.minTimeSlider) {
+			redrawGraph("",false);
+		}
+		
+	}
     public void AddCheckBoxesEvent()
     {
     	for(int u=0;u<ParametersPanel.edgesConcurrencyActiveBox.length;u++)
@@ -222,7 +205,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		{
              DiscoveryData.SocialFilter(id);
  	    }
-		else
+		else if(!id.equals(""))
 		{
 			DiscoveryData.AddSocialGroup(id);
 		}
@@ -243,6 +226,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 				this.DiscoveryData.getHeuristicsNetGraph().removeActivity(ac);  
 		
 			}
+		        
 			    comparator_panel=ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(DiscoveryData.getHeuristicsNetGraph());
 			    
 
@@ -271,6 +255,13 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		
 
 	}
+
+	public void itemStateChanged(ItemEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
 	
 
 	 

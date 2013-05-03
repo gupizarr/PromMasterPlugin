@@ -55,17 +55,22 @@ public class ImproveDiscoveryData {
   private List<List<List<List<String>>>> Clusters;
   private ArrayList<XTrace> Traces;
   private boolean fixLog=false;
-  private ImproveDiscoveryTransformation transformationTraceAlign;
-  
+  private ImproveDiscoveryClusterData DataTraceAlign;
+  private ImproveDiscoveryPerformanceData PerformanceData;
+
   public ImproveDiscoveryData(XLog log, final PluginContext context) {
 	
-	this.transformationTraceAlign = new ImproveDiscoveryTransformation(log);
-    this.Clusters= this.transformationTraceAlign.GetProcessAlig();
-	  Traces= new ArrayList<XTrace>();
+
+	  this.log=log;
+	    transformLog = (XLog) log.clone();
+	    
+	this.DataTraceAlign = new ImproveDiscoveryClusterData(log);
+    this.Clusters= this.DataTraceAlign.GetProcessAlig();
+	this.PerformanceData= new ImproveDiscoveryPerformanceData(log);
+	Traces= new ArrayList<XTrace>();
 	//Activities= new ArrayList<String,String>();
 	RemovedResources= new ArrayList<String>();
-    this.log=log;
-    transformLog = (XLog) log.clone();
+   
     this.OriginallogInfo = XLogInfoFactory.createLogInfo(this.log);
     
 	XEventClasses resources_events = OriginallogInfo.getResourceClasses();
@@ -74,12 +79,23 @@ public class ImproveDiscoveryData {
 	for (int k = 0; k < resources_events.getClasses().size(); k++) {
 	Resources[k] = resources_events.getByIndex(k).toString();
 	}
+	
 
   }
   
-  public ImproveDiscoveryTransformation getTraceAlignTransformation()
+  public ImproveDiscoveryPerformanceData GetPerformanceData()
   {
-	  return this.transformationTraceAlign;
+	  return PerformanceData;
+  }
+  
+  public double[] GetPerformanceDiff()
+  {
+	  return PerformanceData.getSortedFinalTime();
+  }
+
+  public ImproveDiscoveryClusterData getTraceAlignData()
+  {
+	  return this.DataTraceAlign;
   }
   
   public boolean GetFixCase()
@@ -115,8 +131,24 @@ public class ImproveDiscoveryData {
 	  }
   }
 
-  public void UpdateGraph()
+  public XLog GetCurrentLog()
   {
+	  return transformLog;
+  }
+  
+  public void ResetPerformanceData()
+  {
+	  PerformanceData= new  ImproveDiscoveryPerformanceData(transformLog);
+  }
+  
+  public void SetCurrentLog(XLog AuxLog)
+  {
+	  transformLog=AuxLog;
+  }
+  public void UpdateGraph(boolean isPerformance)
+  {
+	  if(!isPerformance)
+	  {
 	  this.transformLog= new XLogImpl(new XAttributeMapLazyImpl<XAttributeMapImpl>(XAttributeMapImpl.class));
 	  this.transformLog.addAll(Traces);
 	  
@@ -136,7 +168,6 @@ public class ImproveDiscoveryData {
 	  if(transformLog.size()>0)
 	  {
 	  XLogInfo Info=XLogInfoFactory.createLogInfo(this.transformLog);
-	  System.out.print("\n Quedaron trazas : "+this.transformLog.size());
 	  HeuristicsMiner fhm = new HeuristicsMiner(context, transformLog,Info ); 
 	  this.HNet= fhm.mine(); 
 
@@ -155,6 +186,25 @@ public class ImproveDiscoveryData {
 	      }
 
 		  this.HNetGraph.getActivities().removeAll(act);
+	  }
+	  }
+	  else
+	  {
+		  if(!transformLog.isEmpty() && transformLog.get(0).size()==1)
+		  {
+		  FixLog();
+		  }
+		  
+
+		  XLogInfo Info=XLogInfoFactory.createLogInfo(this.transformLog);
+		  HeuristicsMiner fhm = new HeuristicsMiner(context, transformLog,Info ); 
+		  this.HNet= fhm.mine(); 
+
+	      this.HNetSettings.setShowingUnconnectedTasks(true);
+		  AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
+		  this.HNetSettings=new AnnotatedVisualizationSettings();
+		  this.HNetGraph= generator.generate(HNet, this.HNetSettings);
+		  	
 	  }
 		
   }
@@ -233,7 +283,7 @@ public class ImproveDiscoveryData {
 	    		}
 	    	}
 	    }
-	      UpdateGraph();
+	      UpdateGraph(false);
   }
   
   public void SocialFilter(String Rols)
@@ -307,7 +357,7 @@ public class ImproveDiscoveryData {
 
          System.out.print("\n Se borraron:"+elementos_borrados+"  eventos y quedan "+Traces.size()+" de "+this.transformLog.size()+  " Trazas");
  		
-          UpdateGraph();
+          UpdateGraph(false);
 	}
   
   public void MostrarFiltrados()
