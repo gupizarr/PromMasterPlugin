@@ -8,7 +8,7 @@ import org.processmining.framework.plugin.annotations.Plugin;
 import org.processmining.framework.plugin.annotations.PluginVariant;
 import org.processmining.models.graphbased.ViewSpecificAttributeMap;
 import org.processmining.models.jgraph.ProMJGraph;
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryData;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
 import org.processmining.plugins.heuristicsnet.miner.heuristics.miner.gui.HeuristicsNetVisualizer;
 
 
@@ -29,11 +29,11 @@ public class ImproveDiscoveryVisualizer  extends HeuristicsNetVisualizer
 	
   @PluginVariant(requiredParameterLabels = { 0 })
   public  JComponent visualize(final PluginContext context,
-                                     final ImproveDiscoveryData DiscoveryData) {
-	  ProMJGraph jgraph = createJGraph(DiscoveryData.getHeuristicsNetGraph(),new ViewSpecificAttributeMap(), context.getProgress());
+                                     final ImproveDiscoveryTransformation DiscoveryTransformation) {
+	  ProMJGraph jgraph = createJGraph(DiscoveryTransformation.GetData().getHeuristicsNetGraph(),
+			  							new ViewSpecificAttributeMap(), context.getProgress());
 	  
-	  return new ImproveDiscoveryPanel(jgraph,
-			  						   DiscoveryData,context);
+	  return new ImproveDiscoveryPanel(jgraph,DiscoveryTransformation,context);
 	 
   }
   

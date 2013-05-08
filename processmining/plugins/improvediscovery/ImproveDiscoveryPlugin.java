@@ -2,10 +2,8 @@ package org.processmining.plugins.PromMasterPlugin.processmining.plugins.improve
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 import org.deckfour.uitopia.api.event.TaskListener.InteractionResult;
-import org.deckfour.xes.classification.XEventClasses;
 import org.deckfour.xes.info.XLogInfo;
 import org.deckfour.xes.info.XLogInfoFactory;
 import org.deckfour.xes.model.XEvent;
@@ -40,7 +38,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 @Plugin(name = "ImproveDiscovery",
         parameterLabels = { "Log", "Mother", "Procreation Configuration" },
         returnLabels = { "Model View" },
-        returnTypes = { ImproveDiscoveryData.class })
+        returnTypes = { ImproveDiscoveryTransformation.class })
 public class ImproveDiscoveryPlugin {
   
 	public static XLogInfo logInfo;
@@ -51,9 +49,9 @@ public class ImproveDiscoveryPlugin {
                   email = "gupizarr@uc.cl",
                   uiLabel = UITopiaVariant.USEPLUGIN)
   @PluginVariant(requiredParameterLabels = {0,2})
-  public  ImproveDiscoveryData create(final PluginContext context, final ImproveDiscoveryConfiguration config,XLog log) {
+  public  ImproveDiscoveryTransformation create(final PluginContext context, final ImproveDiscoveryConfiguration config,XLog log) {
     
-    ImproveDiscoveryData DiscoveryData = new ImproveDiscoveryData(log ,context);
+    ImproveDiscoveryData DiscoveryData = new ImproveDiscoveryData(log);
     DiscoveryData.setOrigintators(SearchComponents(log));
     HeuristicsMiner fhm = new HeuristicsMiner(context, log, logInfo);
     HeuristicsNet HNet= fhm.mine();
@@ -76,9 +74,9 @@ public class ImproveDiscoveryPlugin {
 		DiscoveryData.SetOriginatorList(baseOprtation.getOriginatorList());
 		DiscoveryData.SetSocialNetwork(UtilOperation.generateSN(baseOprtation.calculation(), baseOprtation.getOriginatorList()));
 		
-	 
+	ImproveDiscoveryTransformation IDTransformation= new ImproveDiscoveryTransformation(DiscoveryData,context);
 		
-    return DiscoveryData;
+    return IDTransformation;
     
     
   }
@@ -88,7 +86,7 @@ public class ImproveDiscoveryPlugin {
                   email = "gupizarr@uc.cl",
                   uiLabel = UITopiaVariant.USEPLUGIN)
   @PluginVariant(requiredParameterLabels = { 0 })
-  public  ImproveDiscoveryData create(final UIPluginContext context, XLog log) 
+  public  ImproveDiscoveryTransformation create(final UIPluginContext context, XLog log) 
   {
     ImproveDiscoveryConfiguration config = new ImproveDiscoveryConfiguration("Config");
     
@@ -122,7 +120,7 @@ public class ImproveDiscoveryPlugin {
 		  {
 				for (XEvent event : trace) 
 				{			
-		     		String eventKey = logInfo.getEventClasses().getClassOf(event).getId();
+		     		//String eventKey = logInfo.getEventClasses().getClassOf(event).getId();
 		     		String resource=logInfo.getResourceClasses().getClassOf(event).getId();
 
 		     		if(components.indexOf(resource)==-1)
@@ -144,18 +142,7 @@ public class ImproveDiscoveryPlugin {
 		return sn;
   }
 
-  private static ArrayList<String> getUserActivityTripleList(XLog log)
-  {
-			XLogInfo summary = XLogInfoFactory.createLogInfo(log);
-			ArrayList<String> originatorList = new ArrayList<String>();
-			XEventClasses originators = summary.getResourceClasses();
-			Map<String, SocialNetwork> activityBasedHoWSocialNetworkList = new HashMap<String, SocialNetwork>();
-			for (int k = 0; k < originators.getClasses().size(); k++) {
-			originatorList.add(originators.getByIndex(k).toString());
-			}
-			
-			return originatorList;
-  }
+  
 			
 }
  

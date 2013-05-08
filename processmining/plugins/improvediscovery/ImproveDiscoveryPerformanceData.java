@@ -13,8 +13,6 @@ public class ImproveDiscoveryPerformanceData {
 	  private long[] LogIni;
 	  private long[] LogFinish;
 	  private long[] LogDaysDiff;
-	  private long[] LogHoursDiff;
-	  private long[] LogMinDiff;
 	  private long[] LogSecondsDiff;
 	  private boolean inDays;
       private boolean inHours;
@@ -23,6 +21,7 @@ public class ImproveDiscoveryPerformanceData {
       private boolean ContainTimes;
 	  private double[] finalTime;
 	  private double[] sortedFinalTime;
+	  
 	  public ImproveDiscoveryPerformanceData(XLog log) {
 		// TODO Auto-generated constructor stub
 		this.transformLog=log;
@@ -30,9 +29,7 @@ public class ImproveDiscoveryPerformanceData {
 		 LogIni =new long[log.size()];
 		 LogFinish=new long[log.size()];
 		 LogDaysDiff=new long[log.size()];
-		 LogHoursDiff=new long[log.size()];
 		 LogSecondsDiff=new long[log.size()];
-		 LogMinDiff=new long[log.size()];
 		 
 		 ContainTimes=true;
 		 PerformanceInfo();

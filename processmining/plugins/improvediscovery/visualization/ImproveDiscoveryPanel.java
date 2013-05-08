@@ -3,8 +3,9 @@ package org.processmining.plugins.PromMasterPlugin.processmining.plugins.improve
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Iterator;
@@ -12,8 +13,6 @@ import java.util.Iterator;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.heuristics.elements.Activity;
@@ -21,10 +20,11 @@ import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.ProMJGraphVisualizer;
 import org.processmining.models.jgraph.visualization.ProMJGraphPanel;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryData;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
 import org.processmining.plugins.socialnetwork.analysis.SocialNetworkAnalysisUI;
 
 
-public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener, ItemListener{
+public class ImproveDiscoveryPanel extends JComponent  {
 
 	/**
 	 * 
@@ -37,17 +37,18 @@ public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener
 	private PluginContext context;
 	private ProMJGraphPanel comparator_panel;
 	private SocialNetworkAnalysisUI SNPanel;
+	private ImproveDiscoveryTransformation Transformation;
      
 
 	public ImproveDiscoveryPanel(final ProMJGraph jgraph,
-			final ImproveDiscoveryData DiscoveryData,final PluginContext context) {
+			final ImproveDiscoveryTransformation Transformation,final PluginContext context) {
 		 
 		 // tracealign
 		 //SOCIAL 
 		 //this.SNPanel=new SocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());
-		 
+		 this.Transformation=Transformation;
 		 this.context=context;
-		 this.DiscoveryData=DiscoveryData;
+		 this.DiscoveryData=Transformation.GetData();
 		
 		 this.MainContainer = new JPanel();
 		 this.MainContainer.setSize(new Dimension(1350,615));
@@ -56,9 +57,14 @@ public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener
 	     this.MainContainer.repaint();
 	     
 	     ModelPanel= new ImproveDiscoveryModelPanel(jgraph,this.DiscoveryData.getHeuristicNet(),this.DiscoveryData.getHMinerAVSettings()); 
-	     ParametersPanel= new ImproveDiscoveryParametersPanel(DiscoveryData);
-         ParametersPanel.maxTimeSlider.addChangeListener(this);
-         ParametersPanel.minTimeSlider.addChangeListener(this);
+	     ParametersPanel= new ImproveDiscoveryParametersPanel(Transformation);
+                ParametersPanel.numberOfClusters.addActionListener((new ActionListener() {
+        	public void actionPerformed(ActionEvent arg0) {
+				// TODO Auto-generated method stub
+		
+			}}));
+         AddPerformanceClickAction();
+
 	     this.add(ModelPanel);
          this.add(ParametersPanel);
          //this.SNPanel.setSize(new Dimension(400,400));
@@ -70,24 +76,67 @@ public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener
 
          
          AddCheckBoxesEvent();
-         AddPerformanceEvents();
-         //AddCheckBoxesClusterEvents();
+         //AddClusterCheckBoxEvents();
+         AddCheckBoxesClusterEvents();
 
 		// TODO Auto-generated constructor stub
 	}
 	
-	public void UpdateDiagram()
-	{      
-
-	}
-    
-	public void AddPerformanceEvents()
+	public void AddPerformanceClickAction()
 	{
 		
+		  ParametersPanel.maxTimeSlider.addMouseListener(new MouseListener(){
+
+				public void mouseClicked(MouseEvent arg0) {
+				redrawGraph("",false);
+		    	}
+
+				public void mouseEntered(MouseEvent arg0) {	
+				}
+
+				public void mouseExited(MouseEvent arg0) {
+				}
+
+				public void mousePressed(MouseEvent arg0) {
+				}
+
+				public void mouseReleased(MouseEvent arg0) {
+				}
+	         
+	         });
+	         
+	       
+	        ParametersPanel.minTimeSlider.addMouseListener(new MouseListener(){
+
+	 			public void mouseClicked(MouseEvent arg0) {
+	 			redrawGraph("",false);
+	 			}
+
+	 			public void mouseEntered(MouseEvent arg0) {
+	 			}
+
+	 			public void mouseExited(MouseEvent arg0) {
+	 			}
+	 			public void mousePressed(MouseEvent arg0) {
+	 			}
+	 			public void mouseReleased(MouseEvent arg0) {
+	 			}
+	          
+	          });
+
 	}
+	
 	
 	public void AddCheckBoxesClusterEvents()
 	{
+	 	ParametersPanel.numberOfClusters.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				Transformation.ClearRemovedClusters();
+				Transformation.BuiltHeuristic();
+				BuiltGraph();
+			}
+    	});
+	 	
 		for(int u=0;u<ParametersPanel.ClusteredgesConcurrencyActiveBox.length;u++)
     	{
     		
@@ -106,8 +155,14 @@ public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener
 			public void mousePressed(MouseEvent e) {
 				
 				JCheckBox check=(JCheckBox) e.getComponent();
-				redrawGraphWithClusters(check.getName(),check.isSelected());
-		
+				if(check.isSelected())
+				{// se selecciono para borrarlo
+				redrawGraphWithClusters(check.getName(),true);
+				}
+				else
+				{	
+				redrawGraphWithClusters(check.getName(),false);
+				}
 			}
 			public void mouseReleased(MouseEvent e) {
 				}
@@ -115,14 +170,9 @@ public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener
     	}
 	}
 	
-	public void stateChanged(ChangeEvent evt) {
-		if (evt.getSource() == ParametersPanel.maxTimeSlider || evt.getSource() == ParametersPanel.minTimeSlider) {
-			redrawGraph("",false);
-		}
-		
-	}
     public void AddCheckBoxesEvent()
     {
+   
     	for(int u=0;u<ParametersPanel.edgesConcurrencyActiveBox.length;u++)
     	{
     		
@@ -139,12 +189,14 @@ public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener
 				}
 
 			public void mousePressed(MouseEvent e) {
+				
 				JCheckBox check=(JCheckBox) e.getComponent();
 				if(check.isSelected())
 					redrawGraph(check.getName(),true);
 				else
+				{
 					redrawGraph(check.getName(),false);
-
+				}
 			}
 			public void mouseReleased(MouseEvent e) {
 				}
@@ -154,17 +206,22 @@ public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener
     
 	public void redrawGraphWithClusters(String number,boolean remove)
 	{
-		DiscoveryData.setContext(context);
+		Transformation.setContext(context);
 		
 		if(remove)
 		{
-             DiscoveryData.ClusterFilter(number);
- 	    }
+             Transformation.RemoveClusterAndFilter(number);
+            
+		}
 		else
 		{
-			//DiscoveryData.AddSocialGroup(id);
+		    Transformation.RestoreCluster(number);	
 		}
-		
+		BuiltGraph();
+	}
+	
+	public void BuiltGraph()
+	{
 		if (comparator_panel!= null) {
 			this.remove(comparator_panel);
 			comparator_panel = null;
@@ -173,7 +230,7 @@ public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener
 		} 
 		if (comparator_panel == null) {
 				
-		    if(DiscoveryData.GetFixCase())
+		    if(Transformation.GetFixCase())
 		    {
 				Iterator<Activity> iterador= this.DiscoveryData.getHeuristicsNetGraph().getActivities().iterator();
 				
@@ -194,54 +251,27 @@ public class ImproveDiscoveryPanel extends JComponent  implements ChangeListener
 				this.add(comparator_panel);
 				this.revalidate();
 		
+			
+
 		        
 		}
+		
 	}
+	
 	public void redrawGraph(String id,boolean remove) {
 
-		DiscoveryData.setContext(context);
+		Transformation.setContext(context);
 	
 		if(remove)
 		{
-             DiscoveryData.SocialFilter(id);
+             Transformation.SocialFilter(id);
  	    }
 		else if(!id.equals(""))
 		{
-			DiscoveryData.AddSocialGroup(id);
+			Transformation.AddSocialGroup(id);
 		}
 		
-		if (comparator_panel!= null) {
-			this.remove(comparator_panel);
-			comparator_panel = null;
-			this.revalidate();
-
-		} 
-		if (comparator_panel == null) {
-				
-		    if(DiscoveryData.GetFixCase())
-		    {
-				Iterator<Activity> iterador= this.DiscoveryData.getHeuristicsNetGraph().getActivities().iterator();
-				
-				Activity ac= iterador.next();
-				this.DiscoveryData.getHeuristicsNetGraph().removeActivity(ac);  
-		
-			}
-		        
-			    comparator_panel=ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(DiscoveryData.getHeuristicsNetGraph());
-			    
-
-			    
-			    comparator_panel.setAutoscrolls(false);
-				comparator_panel.setBounds(0, 250,950 ,350);
-				comparator_panel.setSize(new Dimension(950,350));
-				comparator_panel.setPreferredSize(new Dimension(950,350));
-				comparator_panel.setBackground(Color.orange);
-			    
-				this.add(comparator_panel);
-				this.revalidate();
-		
-		        
-		}
+		BuiltGraph();
 	}
 
 

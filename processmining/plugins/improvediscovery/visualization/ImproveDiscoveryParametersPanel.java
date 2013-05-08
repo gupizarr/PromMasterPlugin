@@ -4,10 +4,15 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -19,13 +24,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSlider;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.deckfour.xes.model.XLog;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.visualization.ProMJGraphPanel;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryClusterData;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryClusterTransformation;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryData;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
 
@@ -37,7 +42,7 @@ import com.fluxicon.slickerbox.ui.SlickerSliderUI;
 
 
 
-public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeListener, ItemListener {
+public class ImproveDiscoveryParametersPanel extends JPanel {
 
 	private static final long serialVersionUID = 4221149364708440299L;
 	public static final String TRUE = "true";
@@ -93,6 +98,9 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 	protected JCheckBox edgesFuzzyInterpretAbsoluteBox;
 	protected JCheckBox[] edgesConcurrencyActiveBox;
 	protected JCheckBox[] ClusteredgesConcurrencyActiveBox;
+	protected Map<String,JCheckBox> ClustersCasesCheckBoxes=new HashMap<String,JCheckBox>();
+	 
+	protected JComboBox numberOfClusters;
 	
 	protected Color COLOR_BG = new Color(60, 60, 60);
 	protected Color COLOR_BG2 = new Color(120, 120, 120);
@@ -106,14 +114,16 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 	protected boolean isPatternBasedTransformedLog = false;
     protected ImproveDiscoveryData DataDiscovery;
 	private ImproveDiscoveryTransformation DataTransformation;
+	protected 	JPanel edgesConcurrencyHeaderPanel;
+	protected 		JPanel concurrencySliderPanel;
 
-	
-	public ImproveDiscoveryParametersPanel(ImproveDiscoveryData DataDiscovery) {
+	public ImproveDiscoveryParametersPanel(ImproveDiscoveryTransformation Transformation) {
 		// TODO Auto-generated constructor stub
-		 this.DataDiscovery=DataDiscovery;
-		 DataTransformation= new ImproveDiscoveryTransformation(DataDiscovery);
-		 ClusteredgesConcurrencyActiveBox= new JCheckBox[DataDiscovery.getTraceAlignData().GetClusters().size()];
+		 DataTransformation= Transformation;
+		 DataDiscovery=Transformation.GetData();
+		 ClusteredgesConcurrencyActiveBox= new JCheckBox[DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCase()];
 		 this.fuzzyview(true);
+
 		 this.setBounds(1160, 0, 190, 610);
 		 this.setSize(new Dimension(190,610));
 		 this.setBackground(new Color(100,100,100));
@@ -131,11 +141,10 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 	public JPanel ClustersParameters(boolean clusterCheck)
 	{
 		
-	
 		// concurrency edge transformer slider panel
-		JPanel concurrencySliderPanel = new JPanel();
+		concurrencySliderPanel = new JPanel();
 		concurrencySliderPanel.setOpaque(false);
-		concurrencySliderPanel.setLayout(new BoxLayout(concurrencySliderPanel, BoxLayout.X_AXIS));
+		concurrencySliderPanel.setLayout(new BoxLayout(concurrencySliderPanel, BoxLayout.PAGE_AXIS));
 		
 		// concurrency edge preserve threshold slider panel
 		JPanel concurrencyPreservePanel = new JPanel();
@@ -149,55 +158,136 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 		concurrencyParentPanel.setBackground(COLOR_BG2);
 		concurrencyParentPanel.setOpaque(true);
 		concurrencyParentPanel.setLayout(new BorderLayout());
-
 	
 		
 	    //Checkbox de grupos humanos
-		JPanel edgesConcurrencyHeaderPanel = new JPanel();
+		edgesConcurrencyHeaderPanel = new JPanel();
 	    
 		//Label Number of Clusters
 		JLabel title= new JLabel("Number of clusters");
 		edgesConcurrencyHeaderPanel.add(title);
 		//Numbers of clusters
-		JComboBox numberOfClusters = new JComboBox();
-		numberOfClusters.addItem("Hola");
-		numberOfClusters.addItem("Chao");
-		edgesConcurrencyHeaderPanel.add(numberOfClusters);
-		
-		int num=1;
-	
-	    for(int count=0; count<DataDiscovery.getTraceAlignData().GetClusters().size();count++) {
-	
-			//adding the activities
-		num+=1;
-		ClusteredgesConcurrencyActiveBox[count] = new JCheckBox("Cluster "+num);
-		ClusteredgesConcurrencyActiveBox[count].setUI(new SlickerCheckBoxUI());
-		ClusteredgesConcurrencyActiveBox[count].setOpaque(false);
-		ClusteredgesConcurrencyActiveBox[count].setForeground(COLOR_FG);
-		ClusteredgesConcurrencyActiveBox[count].setFont(this.smallFont);
-		//edgesConcurrencyActiveBox.addItemListener(this);
-		ClusteredgesConcurrencyActiveBox[count].setSelected(clusterCheck);
-		ClusteredgesConcurrencyActiveBox[count].setToolTipText("<html>This control select the clusters of the model" +
-				"visualization</html>");
-		
-		//agrego Id para identificarlo
-		
-		ClusteredgesConcurrencyActiveBox[count].setName(""+DataDiscovery.getTraceAlignData().GetClusters().get(count));
-		
-		edgesConcurrencyHeaderPanel.add(ClusteredgesConcurrencyActiveBox[count]);	
-		
+		numberOfClusters = new JComboBox();
+		for(int j=1;j<= DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCase();j++ )
+		{
+			ClusteredgesConcurrencyActiveBox[j-1] = new JCheckBox("Cluster "+j);
+			numberOfClusters.addItem(j);
 		}
+		numberOfClusters.setSelectedIndex(2);
+		numberOfClusters.addActionListener(new ActionListener(){
+			
+			public void actionPerformed(ActionEvent arg0) {
+				String value= numberOfClusters.getSelectedItem().toString();
+				DataTransformation.GetClusterTransformation().GetClusterData().SetNumberOfClusters(Integer.parseInt(value));
+				DataTransformation.GetClusterTransformation().MakeProcessAlign();
 		
+				AddClustersParameters(false);
+				
+			}});
+	   
+		
+		edgesConcurrencyHeaderPanel.add(numberOfClusters);
+		AddClustersParameters(true);
 		edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
 		edgesConcurrencyHeaderPanel.setOpaque(false);
 		edgesConcurrencyHeaderPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
-		edgesConcurrencyHeaderPanel.add(Box.createVerticalGlue());
+		edgesConcurrencyHeaderPanel.add(Box.createVerticalGlue());   		
 		concurrencyParentPanel.add(edgesConcurrencyHeaderPanel, BorderLayout.NORTH);
 		concurrencyParentPanel.add(concurrencySliderPanel, BorderLayout.CENTER);
 		
 		return concurrencyParentPanel;
 	}
 	
+	
+	public void AddClustersParameters(boolean firstTime)
+	{
+		
+		int numberOfCheckBoxes=3;
+
+		if(!firstTime)
+		{
+		concurrencySliderPanel.removeAll();
+		numberOfCheckBoxes=Integer.parseInt(numberOfClusters.getSelectedItem().toString());
+		DataTransformation.GetClusterTransformation().SetClusterData(new ImproveDiscoveryClusterData(DataTransformation.GetData().GetCurrentLog(),numberOfCheckBoxes));
+		DataTransformation.SetClusterTransformation(new ImproveDiscoveryClusterTransformation(
+				new ImproveDiscoveryClusterData(DataTransformation.GetData().GetCurrentLog(),numberOfCheckBoxes)));
+		
+		//GetClusterTransformation().SetClusterData(DataTransformation.GetData().getTraceAlignData());
+		}
+
+					
+		for(int count=0; count<numberOfCheckBoxes;count++) {
+		//adding the activities
+		/*
+			for(int c=0;c<DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(count);c++)
+		{
+				JCheckBox J= new JCheckBox("Case "+c);
+				ClustersCasesCheckBoxes.put(count+"-"+c ,J);
+		}
+		*/		
+		ClusteredgesConcurrencyActiveBox[count].setUI(new SlickerCheckBoxUI());
+		ClusteredgesConcurrencyActiveBox[count].setOpaque(false);
+		ClusteredgesConcurrencyActiveBox[count].setForeground(COLOR_FG);
+		ClusteredgesConcurrencyActiveBox[count].setFont(this.smallFont);
+		//edgesConcurrencyActiveBox.addItemListener(this);
+		ClusteredgesConcurrencyActiveBox[count].setSelected(true);
+		ClusteredgesConcurrencyActiveBox[count].setToolTipText("<html>This control select the clusters of the model" +
+				"visualization</html>");
+		//agrego Id para identificarlo
+		
+		ClusteredgesConcurrencyActiveBox[count].setName(""+count);
+		concurrencySliderPanel.add(ClusteredgesConcurrencyActiveBox[count]);	
+		JLabel label= new JLabel("+");
+		concurrencySliderPanel.add(label);
+		label.addMouseListener(new MouseListener(){
+
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				System.out.print("Ampliar clusters");
+			}
+
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
+		/*
+		for(int s=0;s<DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(count);s++)
+		{
+		JCheckBox check=ClustersCasesCheckBoxes.get(count+"-"+s);
+		check.setUI(new SlickerCheckBoxUI());
+		check.setOpaque(false);
+		check.setForeground(COLOR_FG);
+		check.setFont(this.smallFont);
+		//edgesConcurrencyActiveBox.addItemListener(this);
+		check.setSelected(true);
+		check.setToolTipText("<html>This control select the clusters of the model" +
+				"visualization</html>");
+		
+		check.setName(""+count);
+		concurrencySliderPanel.add(check);	
+		
+		}*/
+		}
+		this.validate();
+		this.repaint();
+	}
     public JPanel organizationView(boolean group_check)
 	{
 		// concurrency edge transformer slider panel
@@ -368,6 +458,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 	
 	public JPanel PerformanceParameters()
 	{
+		
 		//start  of the "Edge filter" panel
 		// lower edge transformer panel
 		JPanel mainPerformanceContainer = new JPanel(); // mainPerformanceContainer is the Edge filter panel
@@ -375,23 +466,23 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 		mainPerformanceContainer.setBackground(COLOR_BG2);
 		mainPerformanceContainer.setOpaque(true);
 		mainPerformanceContainer.setLayout(new BorderLayout());
+		
 		// lower header panel (radio buttons etc.)
 		JPanel performanceHeaderPanel = new JPanel();
 		performanceHeaderPanel.setOpaque(false);
 		performanceHeaderPanel.setLayout(new BoxLayout(performanceHeaderPanel, BoxLayout.Y_AXIS));
+		
 		//centerHorizontally(lowerHeaderLabel);
 		JPanel performanceParametersContainer = new JPanel();
 		performanceParametersContainer.setOpaque(false);
 		performanceParametersContainer.setLayout(new BoxLayout(performanceParametersContainer, BoxLayout.X_AXIS));
+		
 		// lower ratio slider panel
 		JPanel parametersPerformancePanelLabel = new JPanel();
 		parametersPerformancePanelLabel.setOpaque(false);
 		parametersPerformancePanelLabel.setLayout(new BorderLayout());		
 
-		// lower percentage slider panel
-		
-
-		
+		// lower percentage slider panel				
 		minSliderHeader = new JLabel("<html>Min Time <br>"+""+ (int) DataDiscovery.GetPerformanceDiff()[DataDiscovery.GetPerformanceDiff().length-1]+" "+DataDiscovery.GetPerformanceData().TagTime());
 		minSliderHeader.setFont(this.smallFont);
 		minSliderHeader.setOpaque(false);
@@ -401,7 +492,39 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 		minTimeSlider = new JSlider(JSlider.VERTICAL,(int) DataDiscovery.GetPerformanceDiff()[0] ,  (int) DataDiscovery.GetPerformanceDiff()[DataDiscovery.GetPerformanceDiff().length-1], (int) DataDiscovery.GetPerformanceDiff()[0]);
 		minTimeSlider.setUI(new SlickerSliderUI(minTimeSlider));
 		minTimeSlider.setOpaque(false);
-		minTimeSlider.addChangeListener(this);
+		minTimeSlider.addMouseListener(new MouseListener(){
+
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+			
+				maxTimeSlider.setMinimum(minTimeSlider.getValue());
+				maxTimeLabel.setText(""+minTimeSlider.getValue()+" "+DataDiscovery.GetPerformanceData().TagTime());
+				DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
+		
+			}
+
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+         
+         });
+         
 		minTimeSlider.setToolTipText("<html>Select the minimum time of the traces for filtering<br>"
 				+ "lower value prefers correlation.</html>");
 
@@ -415,6 +538,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 		parametersPerformancePanelLabel.add(packVerticallyCentered(minSliderHeader, 50, 40), BorderLayout.NORTH);
 		parametersPerformancePanelLabel.add(minTimeSlider, BorderLayout.CENTER);
 		parametersPerformancePanelLabel.add(packVerticallyCentered(minTimeLabel, 40, 20), BorderLayout.SOUTH);
+		
 		// lower percentage slider panel
 		JPanel parametersPerformancePanel = new JPanel();
 		parametersPerformancePanel.setOpaque(false);
@@ -434,7 +558,37 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 		maxTimeSlider = new JSlider(JSlider.VERTICAL, (int) DataDiscovery.GetPerformanceDiff()[0],  (int) DataDiscovery.GetPerformanceDiff()[DataDiscovery.GetPerformanceDiff().length-1], (int) DataDiscovery.GetPerformanceDiff()[DataDiscovery.GetPerformanceDiff().length-1]);
 		maxTimeSlider.setUI(new SlickerSliderUI(maxTimeSlider));
 		maxTimeSlider.setOpaque(false);
-		maxTimeSlider.addChangeListener(this);
+		maxTimeSlider.addMouseListener(new MouseListener(){
+
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				minTimeSlider.setMaximum(maxTimeSlider.getValue());
+				DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
+				minSliderHeader.setText("<html>Min Time <br>"+""+ (int) maxTimeSlider.getValue() +" "+DataDiscovery.GetPerformanceData().TagTime());
+				
+			}
+
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+         
+         });
 		maxTimeSlider.setSize(new Dimension(10,100));
 		maxTimeSlider.setToolTipText("<html>" +
 						"Select the minimum time of the traces for filtering.</html>");
@@ -460,7 +614,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 		meanPerformanceCheckBox.setOpaque(false);
 		meanPerformanceCheckBox.setForeground(COLOR_FG);
 		meanPerformanceCheckBox.setFont(this.smallFont);
-		meanPerformanceCheckBox.addItemListener(this);
+		//meanPerformanceCheckBox.addItemListener(this);
 		meanPerformanceCheckBox.setToolTipText("<html>See the mean</html>");
 	
 	
@@ -475,6 +629,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 
 				return mainPerformanceContainer;
 	}
+	
 	protected void centerHorizontally(JLabel label) {
 		label.setHorizontalAlignment(JLabel.CENTER);
 		label.setHorizontalTextPosition(JLabel.CENTER);
@@ -494,31 +649,12 @@ public class ImproveDiscoveryParametersPanel extends JPanel implements ChangeLis
 		boxed.add(Box.createHorizontalGlue());
 		boxed.add(component);
 		boxed.add(Box.createHorizontalGlue());
+		
 		return boxed;
 	}
-	
-	public void stateChanged(ChangeEvent evt) {
-		if (evt.getSource() == maxTimeSlider) {
-			minTimeSlider.setMaximum(maxTimeSlider.getValue());
-			DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
-			minSliderHeader.setText("<html>Min Time <br>"+""+ (int) maxTimeSlider.getValue() +" "+DataDiscovery.GetPerformanceData().TagTime());
-			
-			
-			
-		} else if (evt.getSource() == minTimeSlider) {
-			maxTimeSlider.setMinimum(minTimeSlider.getValue());
-			maxTimeLabel.setText(""+minTimeSlider.getValue()+" "+DataDiscovery.GetPerformanceData().TagTime());
-			minTimeLabel.setText(""+minTimeSlider.getValue()+" "+DataDiscovery.GetPerformanceData().TagTime());
-			DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
 		
-		} else
-		{
-			//updateFuzzyEdgePercentageSlider();
-		} 
-	}
-	
 	protected void updatePerformanceSlider() {
-		double value = getNodeThresholdFromSlider();
+
 	    redrawGraph("Performance");
 		
 	}
