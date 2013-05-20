@@ -4,15 +4,12 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -29,13 +26,11 @@ import org.deckfour.xes.model.XLog;
 import org.processmining.framework.plugin.PluginContext;
 import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.visualization.ProMJGraphPanel;
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryClusterData;
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryClusterTransformation;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryData;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
 
 import com.fluxicon.slickerbox.components.InspectorButton;
-import com.fluxicon.slickerbox.components.StackedCardsTabbedPane;
+import com.fluxicon.slickerbox.components.SlickerTabbedPane;
 import com.fluxicon.slickerbox.ui.SlickerCheckBoxUI;
 import com.fluxicon.slickerbox.ui.SlickerSliderUI;
 
@@ -67,13 +62,14 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 	protected ProMJGraph clusterGraph;
 	protected ProMJGraph molecularGraph;
 	protected PluginContext context;
-   
 
 	//	protected SidePanel sidePanel;
 	//JF add for show the exported Fuzzy Graph object only
 	protected JPanel rightPanel;
 	protected boolean enableRedraw;
-
+    protected ClusterParameters mainClusterParameters;
+    protected SocialParametersPanel mainSocialParameters;
+    
 	protected JPanel rootPanel;
 	protected ProMJGraphPanel graphPanel;
 	protected ProMJGraphPanel clustGraphPanel;
@@ -96,9 +92,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 	protected JLabel edgesConcurrencyRatioLabel;
 	protected JCheckBox meanPerformanceCheckBox;
 	protected JCheckBox edgesFuzzyInterpretAbsoluteBox;
-	protected JCheckBox[] edgesConcurrencyActiveBox;
-	protected JCheckBox[] ClusteredgesConcurrencyActiveBox;
-	protected Map<String,JCheckBox> ClustersCasesCheckBoxes=new HashMap<String,JCheckBox>();
+	
 	 
 	protected JComboBox numberOfClusters;
 	
@@ -115,19 +109,28 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
     protected ImproveDiscoveryData DataDiscovery;
 	private ImproveDiscoveryTransformation DataTransformation;
 	protected 	JPanel edgesConcurrencyHeaderPanel;
-	protected 		JPanel concurrencySliderPanel;
-
-	public ImproveDiscoveryParametersPanel(ImproveDiscoveryTransformation Transformation) {
+    protected ActionListener MainLogAction;
+    
+	protected int tabPanelWidth;
+	
+	public ImproveDiscoveryParametersPanel(ImproveDiscoveryTransformation Transformation,ActionListener action) {
 		// TODO Auto-generated constructor stub
+		 this.MainLogAction=action;
 		 DataTransformation= Transformation;
 		 DataDiscovery=Transformation.GetData();
-		 ClusteredgesConcurrencyActiveBox= new JCheckBox[DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCase()];
-		 this.fuzzyview(true);
-
-		 this.setBounds(1160, 0, 190, 610);
-		 this.setSize(new Dimension(190,610));
+		 mainClusterParameters=	new ClusterParameters(this.DataTransformation);
+		 mainSocialParameters= new SocialParametersPanel(this.DataTransformation);
+		 
+		 
+			 this.setBounds(990, 0, 350, 640);
+			 this.setSize(new Dimension(350,640));
+			 tabPanelWidth=365;
+		 
+		 this.fuzzyview(true); 
 		 this.setBackground(new Color(100,100,100));
 		 this.repaint();
+   
+
 
 	}
 	public String TransformLabel(String label)
@@ -138,255 +141,15 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 		return label;
 	}
 	
-	public JPanel ClustersParameters(boolean clusterCheck)
-	{
-		
-		// concurrency edge transformer slider panel
-		concurrencySliderPanel = new JPanel();
-		concurrencySliderPanel.setOpaque(false);
-		concurrencySliderPanel.setLayout(new BoxLayout(concurrencySliderPanel, BoxLayout.PAGE_AXIS));
-		
-		// concurrency edge preserve threshold slider panel
-		JPanel concurrencyPreservePanel = new JPanel();
-		concurrencyPreservePanel.setOpaque(false);
-		concurrencyPreservePanel.setLayout(new BorderLayout());
-		
-
-		// setup concurrency parent panel
-		JPanel concurrencyParentPanel = new JPanel();
-		concurrencyParentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		concurrencyParentPanel.setBackground(COLOR_BG2);
-		concurrencyParentPanel.setOpaque(true);
-		concurrencyParentPanel.setLayout(new BorderLayout());
-	
-		
-	    //Checkbox de grupos humanos
-		edgesConcurrencyHeaderPanel = new JPanel();
-	    
-		//Label Number of Clusters
-		JLabel title= new JLabel("Number of clusters");
-		edgesConcurrencyHeaderPanel.add(title);
-		//Numbers of clusters
-		numberOfClusters = new JComboBox();
-		for(int j=1;j<= DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCase();j++ )
-		{
-			ClusteredgesConcurrencyActiveBox[j-1] = new JCheckBox("Cluster "+j);
-			numberOfClusters.addItem(j);
-		}
-		numberOfClusters.setSelectedIndex(2);
-		numberOfClusters.addActionListener(new ActionListener(){
-			
-			public void actionPerformed(ActionEvent arg0) {
-				String value= numberOfClusters.getSelectedItem().toString();
-				DataTransformation.GetClusterTransformation().GetClusterData().SetNumberOfClusters(Integer.parseInt(value));
-				DataTransformation.GetClusterTransformation().MakeProcessAlign();
-		
-				AddClustersParameters(false);
-				
-			}});
-	   
-		
-		edgesConcurrencyHeaderPanel.add(numberOfClusters);
-		AddClustersParameters(true);
-		edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
-		edgesConcurrencyHeaderPanel.setOpaque(false);
-		edgesConcurrencyHeaderPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
-		edgesConcurrencyHeaderPanel.add(Box.createVerticalGlue());   		
-		concurrencyParentPanel.add(edgesConcurrencyHeaderPanel, BorderLayout.NORTH);
-		concurrencyParentPanel.add(concurrencySliderPanel, BorderLayout.CENTER);
-		
-		return concurrencyParentPanel;
-	}
 	
 	
-	public void AddClustersParameters(boolean firstTime)
-	{
-		
-		int numberOfCheckBoxes=3;
 
-		if(!firstTime)
-		{
-		concurrencySliderPanel.removeAll();
-		numberOfCheckBoxes=Integer.parseInt(numberOfClusters.getSelectedItem().toString());
-		DataTransformation.GetClusterTransformation().SetClusterData(new ImproveDiscoveryClusterData(DataTransformation.GetData().GetCurrentLog(),numberOfCheckBoxes));
-		DataTransformation.SetClusterTransformation(new ImproveDiscoveryClusterTransformation(
-				new ImproveDiscoveryClusterData(DataTransformation.GetData().GetCurrentLog(),numberOfCheckBoxes)));
-		
-		//GetClusterTransformation().SetClusterData(DataTransformation.GetData().getTraceAlignData());
-		}
-
-					
-		for(int count=0; count<numberOfCheckBoxes;count++) {
-		//adding the activities
-		/*
-			for(int c=0;c<DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(count);c++)
-		{
-				JCheckBox J= new JCheckBox("Case "+c);
-				ClustersCasesCheckBoxes.put(count+"-"+c ,J);
-		}
-		*/		
-		ClusteredgesConcurrencyActiveBox[count].setUI(new SlickerCheckBoxUI());
-		ClusteredgesConcurrencyActiveBox[count].setOpaque(false);
-		ClusteredgesConcurrencyActiveBox[count].setForeground(COLOR_FG);
-		ClusteredgesConcurrencyActiveBox[count].setFont(this.smallFont);
-		//edgesConcurrencyActiveBox.addItemListener(this);
-		ClusteredgesConcurrencyActiveBox[count].setSelected(true);
-		ClusteredgesConcurrencyActiveBox[count].setToolTipText("<html>This control select the clusters of the model" +
-				"visualization</html>");
-		//agrego Id para identificarlo
-		
-		ClusteredgesConcurrencyActiveBox[count].setName(""+count);
-		concurrencySliderPanel.add(ClusteredgesConcurrencyActiveBox[count]);	
-		JLabel label= new JLabel("+");
-		concurrencySliderPanel.add(label);
-		label.addMouseListener(new MouseListener(){
-
-			public void mouseClicked(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			public void mouseEntered(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			public void mouseExited(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			public void mousePressed(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				System.out.print("Ampliar clusters");
-			}
-
-			public void mouseReleased(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		});
-		/*
-		for(int s=0;s<DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(count);s++)
-		{
-		JCheckBox check=ClustersCasesCheckBoxes.get(count+"-"+s);
-		check.setUI(new SlickerCheckBoxUI());
-		check.setOpaque(false);
-		check.setForeground(COLOR_FG);
-		check.setFont(this.smallFont);
-		//edgesConcurrencyActiveBox.addItemListener(this);
-		check.setSelected(true);
-		check.setToolTipText("<html>This control select the clusters of the model" +
-				"visualization</html>");
-		
-		check.setName(""+count);
-		concurrencySliderPanel.add(check);	
-		
-		}*/
-		}
-		this.validate();
-		this.repaint();
-	}
-    public JPanel organizationView(boolean group_check)
-	{
-		// concurrency edge transformer slider panel
-				JPanel concurrencySliderPanel = new JPanel();
-				concurrencySliderPanel.setOpaque(false);
-				concurrencySliderPanel.setLayout(new BoxLayout(concurrencySliderPanel, BoxLayout.X_AXIS));
-				
-				// concurrency edge preserve threshold slider panel
-				JPanel concurrencyPreservePanel = new JPanel();
-				concurrencyPreservePanel.setOpaque(false);
-				concurrencyPreservePanel.setLayout(new BorderLayout());
-				
-				edgesConcurrencyThresholdLabel = new JLabel("0.000");
-				edgesConcurrencyThresholdLabel.setSize(new Dimension(100, 25));
-				edgesConcurrencyThresholdLabel.setForeground(COLOR_FG);
-				edgesConcurrencyThresholdLabel.setFont(this.smallFont);
-				centerHorizontally(edgesConcurrencyThresholdLabel);
-						
-				
-		// concurrency edge ratio threshold slider panel
-				JPanel concurrencyRatioPanel = new JPanel();
-				concurrencyRatioPanel.setOpaque(false);
-				concurrencyRatioPanel.setLayout(new BorderLayout());
-				JLabel concurrencyRatioHeader = new JLabel("Ratio of the group definition");
-				concurrencyRatioHeader.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-				concurrencyRatioHeader.setOpaque(false);
-				concurrencyRatioHeader.setForeground(COLOR_FG);
-				concurrencyRatioHeader.setFont(this.smallFont);
-				centerHorizontally(concurrencyRatioHeader);
-				edgesConcurrencyRatioSlider = new JSlider(JSlider.VERTICAL, 0, 1000, 0);
-				edgesConcurrencyRatioSlider.setUI(new SlickerSliderUI(edgesConcurrencyRatioSlider));
-				edgesConcurrencyRatioSlider.setOpaque(false);
-				//edgesConcurrencyRatioSlider.addChangeListener(this);
-				edgesConcurrencyRatioSlider.setToolTipText("<html>For conflicting relations which have fallen<br>"
-						+ "victim to simplification, this determines ratio<br>"
-						+ "threshold. A lower value prefers sequentialization of<br>"
-						+ "conflicting relations, a higher value tends to<br>"
-						+ "interpret them as being scheduled concurrently.</html>");
-				edgesConcurrencyRatioLabel = new JLabel("0.000");
-				edgesConcurrencyRatioLabel.setSize(new Dimension(100, 25));
-				edgesConcurrencyRatioLabel.setForeground(COLOR_FG);
-				edgesConcurrencyRatioLabel.setFont(this.smallFont);
-				
-				centerHorizontally(edgesConcurrencyRatioLabel);
-				
-				concurrencyRatioPanel.add(packVerticallyCentered(concurrencyRatioHeader, 140, 20), BorderLayout.NORTH);
-				concurrencyRatioPanel.add(edgesConcurrencyRatioSlider, BorderLayout.CENTER);
-				concurrencyRatioPanel.add(packVerticallyCentered(edgesConcurrencyRatioLabel, 40, 20), BorderLayout.SOUTH);
-				
-				
-				// assemble concurrency slider panel
-				concurrencySliderPanel.add(concurrencyPreservePanel);
-				concurrencySliderPanel.add(concurrencyRatioPanel);
-				// setup concurrency parent panel
-				JPanel concurrencyParentPanel = new JPanel();
-				concurrencyParentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-				concurrencyParentPanel.setBackground(COLOR_BG2);
-				concurrencyParentPanel.setOpaque(true);
-				concurrencyParentPanel.setLayout(new BorderLayout());
-				
-				
-			    //Checkbox de grupos humanos
-				JPanel edgesConcurrencyHeaderPanel = new JPanel();
-				edgesConcurrencyActiveBox= new JCheckBox[DataDiscovery.Resources.length];
-				for(int count=0; count<DataDiscovery.Resources.length;count++) {
-			
-					//adding the activities
-					
-				edgesConcurrencyActiveBox[count] = new JCheckBox(DataDiscovery.Resources[count]);
-				edgesConcurrencyActiveBox[count].setUI(new SlickerCheckBoxUI());
-				edgesConcurrencyActiveBox[count].setOpaque(false);
-				edgesConcurrencyActiveBox[count].setForeground(COLOR_FG);
-				edgesConcurrencyActiveBox[count].setFont(this.smallFont);
-				//edgesConcurrencyActiveBox.addItemListener(this);
-				edgesConcurrencyActiveBox[count].setSelected(group_check);
-				edgesConcurrencyActiveBox[count].setToolTipText("<html>This control can be used to switch off<br>"
-						+ "concurrency filtering in the model.</html>");
-				
-				//agrego Id para identificarlo
-				
-				edgesConcurrencyActiveBox[count].setName(DataDiscovery.Resources[count]);
-				
-				edgesConcurrencyHeaderPanel.add(edgesConcurrencyActiveBox[count]);	
-				
-				}
-				
-				edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
-				edgesConcurrencyHeaderPanel.setOpaque(false);
-				edgesConcurrencyHeaderPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
-				edgesConcurrencyHeaderPanel.add(Box.createVerticalGlue());
-				concurrencyParentPanel.add(edgesConcurrencyHeaderPanel, BorderLayout.NORTH);
-				concurrencyParentPanel.add(concurrencySliderPanel, BorderLayout.CENTER);
-				
-				return concurrencyParentPanel;
-	}
+	
 
 	public void fuzzyview(boolean group_check)
 	{
 			// derive standard control element font
+
 			this.smallFont = new Font("11f", 12, 10);
 			// root panel
 			JPanel rootPanel = new JPanel();
@@ -394,32 +157,25 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 			rootPanel.setBackground(new Color(100, 100, 100));
 			rootPanel.setLayout(new BorderLayout());
 
-        	//ClusgerParameters
-            JPanel mainPerformanceContainer=ClustersParameters(true);
-			
+        
 			// Make the organizational tab
-			JPanel concurrencyParentPanel=this.organizationView(group_check);
-			
+			SocialParametersPanel concurrencyParentPanel=mainSocialParameters;
+		
 			//PerformanceParameters
 			JPanel upperControlPanel=PerformanceParameters();
+			
 			// assemble slick tab pane
-			StackedCardsTabbedPane tabPane = new StackedCardsTabbedPane();
-			tabPane.addTab("Organizational perspective", concurrencyParentPanel);
-			tabPane.addTab("Flow perspective", mainPerformanceContainer);
-			tabPane.addTab("Performance perspective", upperControlPanel);
-			tabPane.setActive(2);
-			tabPane.setMinimumSize(new Dimension(190, 220));
-			tabPane.setMaximumSize(new Dimension(190, 570));
-			tabPane.setPreferredSize(new Dimension(190, 570));
+			SlickerTabbedPane tabPane = new SlickerTabbedPane("", COLOR_BG2, Color.white,COLOR_BG2);
+			tabPane.addTab("Organizational", concurrencyParentPanel, MainLogAction);
+			tabPane.addTab("Flow",mainClusterParameters,MainLogAction);
+			tabPane.addTab("Performance", upperControlPanel,MainLogAction);
+			
+		
+			tabPane.setMinimumSize(new Dimension(tabPanelWidth, 220));
+			tabPane.setMaximumSize(new Dimension(tabPanelWidth, 600));
+			tabPane.setPreferredSize(new Dimension(tabPanelWidth, 600));
 			tabPane.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
 			
-
-		
-			InspectorButton detailButton = new InspectorButton();
-			detailButton.setToolTipText("click to show model detail inspector");
-			detailButton.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-			detailButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-			detailButton.setMinimumSize(new Dimension(20, 20));
 			
 			//log Conformance Replay button
 			InspectorButton replayButton = new InspectorButton();
@@ -433,7 +189,7 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 			replayPanel.setLayout(new BoxLayout(replayPanel, BoxLayout.Y_AXIS));
 			replayPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 2));
 			replayPanel.setOpaque(false);
-			replayPanel.add(detailButton);
+		
 			replayPanel.add(Box.createVerticalStrut(5));
 			
 			replayPanel.add(replayButton);
@@ -456,9 +212,16 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 
 	}
 	
+	public void ResetPerformance()
+    {
+		
+		System.out.print("\n Reset parameters");
+		JPanel upperControlPanel=PerformanceParameters();
+		upperControlPanel.repaint();
+	}
 	public JPanel PerformanceParameters()
 	{
-		
+		DataDiscovery.InicializatePerformanceData();
 		//start  of the "Edge filter" panel
 		// lower edge transformer panel
 		JPanel mainPerformanceContainer = new JPanel(); // mainPerformanceContainer is the Edge filter panel
@@ -652,6 +415,27 @@ public class ImproveDiscoveryParametersPanel extends JPanel {
 		
 		return boxed;
 	}
+	
+	protected JPanel packClusterSelector(JComponent component, int width, int height) {
+		
+		
+		JPanel boxed = new JPanel();
+		boxed.setLayout(new BoxLayout(boxed, BoxLayout.X_AXIS));
+		boxed.setBorder(BorderFactory.createEmptyBorder());
+		boxed.setOpaque(false);
+		
+		Dimension dim = new Dimension(width, height);
+		component.setMinimumSize(dim);
+		component.setMaximumSize(dim);
+		component.setPreferredSize(dim);
+		component.setSize(dim);
+		
+		boxed.add(component,BorderLayout.LINE_START);
+		
+		
+		return boxed;
+	}
+	
 		
 	protected void updatePerformanceSlider() {
 

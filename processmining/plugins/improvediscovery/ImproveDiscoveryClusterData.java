@@ -21,7 +21,7 @@ public class ImproveDiscoveryClusterData {
 	XLog log;
 	List<XTrace> traceList = new ArrayList<XTrace>();
 	boolean isLogEncoded = false;
-	
+	protected boolean big=true;
 	private Set<FeatureType> previousFeatureExtractionTypeSet = new HashSet<FeatureType>();
 	private Set<FeatureType> featureExtractionTypeSet = new HashSet<FeatureType>();
 
@@ -101,6 +101,11 @@ public class ImproveDiscoveryClusterData {
 		if(numberOfClusterCase%2!=0)
 		{
 			numberOfClusterCase=numberOfClusterCase-1;
+		}
+		
+		if(numberOfClusterCase>13)
+		{
+			numberOfClusterCase=13;
 		}
 		return numberOfClusterCase;
 	}

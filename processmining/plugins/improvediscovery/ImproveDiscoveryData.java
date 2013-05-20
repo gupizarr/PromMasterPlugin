@@ -32,9 +32,9 @@ public class ImproveDiscoveryData {
   private SocialNetwork  social_n;
   private XLog log;
   private XLog transformLog;
+  private XLog workingLog;
   private XLogInfo OriginallogInfo;
   public String[] Resources;
-  private ImproveDiscoveryClusterData DataTraceAlign;
   private ImproveDiscoveryPerformanceData PerformanceData;
   private boolean isEmpty=false;
   
@@ -43,9 +43,8 @@ public class ImproveDiscoveryData {
 
 	this.log=log;
 	transformLog = (XLog) log.clone();
-	    
+	workingLog= (XLog) log.clone();
 	  
-	this.PerformanceData= new ImproveDiscoveryPerformanceData(log);
 
     this.OriginallogInfo = XLogInfoFactory.createLogInfo(this.log);
     
@@ -58,6 +57,17 @@ public class ImproveDiscoveryData {
 	
 
   }
+  
+  public void InicializatePerformanceData()
+  {
+		this.PerformanceData= new ImproveDiscoveryPerformanceData(log);
+
+  }
+  
+  public XLog GetWorkingLog()
+  {
+	  return workingLog;
+  } 
   
   public ImproveDiscoveryPerformanceData GetPerformanceData()
   {
@@ -196,15 +206,20 @@ public class ImproveDiscoveryData {
 
   }
   
-  public XLog GetOriginalLog()
+  public XLog GetOriginalWorkingLog()
   {
-	  return log;
+	  return workingLog;
   }
   
-  public void ReturnToOriginalLog()
+  public void ReturnToWorkingLog()
   {
-		transformLog = (XLog) log.clone();
+		transformLog = (XLog) workingLog.clone();
 
+  }
+  
+  public void SaveCurrentLogTransformation()
+  {
+	  workingLog = (XLog) transformLog.clone();
   }
   
   public void IsEmpty(boolean empty)

@@ -47,9 +47,9 @@ ChangeListener, ActionListener {
 					    this.getComponent(1).setSize(new Dimension(980,290));
 						//LPanel.repaint();	
 					    this.setAutoscrolls(false);
-					    this.setBounds(0, 0,900 ,300);
-					    this.setSize(new Dimension(950,300));
-					    this.setPreferredSize(new Dimension(950,320));
+					    this.setBounds(0, 0,700 ,300);
+					    this.setSize(new Dimension(750,300));
+					    this.setPreferredSize(new Dimension(750,320));
 					    this.setBackground(Color.orange);
 					
 					    

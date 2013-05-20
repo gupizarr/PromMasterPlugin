@@ -24,7 +24,7 @@ public class ImproveDiscoveryPerformanceData {
 	  
 	  public ImproveDiscoveryPerformanceData(XLog log) {
 		// TODO Auto-generated constructor stub
-		this.transformLog=log;
+		 this.transformLog=log;
 	
 		 LogIni =new long[log.size()];
 		 LogFinish=new long[log.size()];
