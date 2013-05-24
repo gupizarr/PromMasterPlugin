@@ -13,16 +13,40 @@ public class ImproveDiscoverySocialTransformation {
 
 	protected WorkingtogetherSAR WorkingTogetherData;
 	protected DoubleMatrix2D WorkingTogetherMatrix;
+	
+	protected WorkingtogetherSAR WorkingTogetherDataToShow;
+	protected DoubleMatrix2D WorkingTogetherMatrixToShow;
+	
 	protected Map<String,SocialRelation> Relations=new HashMap<String,SocialRelation>();
 	private   ArrayList<ArrayList<Integer>> Teams= new ArrayList<ArrayList<Integer>>();
 	protected Map<Double,ArrayList<SocialRelation>> SubGroups=new HashMap<Double,ArrayList<SocialRelation>>();
 	private   ArrayList<ArrayList<Integer>> GroupOfTwo= new ArrayList<ArrayList<Integer>>();
-
-	
+	private ImproveDiscoveryData Data;
+	private double cuteValue=0;
 	public ImproveDiscoverySocialTransformation(ImproveDiscoveryData Data) {
 		// TODO Auto-generated constructor stub
-		WorkingTogetherData= new  WorkingtogetherSAR(Data.GetCurrentLog());
-		
+		WorkingTogetherData= new  WorkingtogetherSAR(Data.GetBaseLog());
+		WorkingTogetherDataToShow= new  WorkingtogetherSAR(Data.GetWorkingLog());
+
+		this.Data=Data;
+	}
+	
+	public WorkingtogetherSAR GetWorkingTogetherDataToShow()
+	{
+		return  WorkingTogetherDataToShow;
+	}
+	
+	public void SetWorkingTogetherToShow()
+	{
+		WorkingTogetherDataToShow=new  WorkingtogetherSAR(Data.GetWorkingLog());
+		WorkingTogetherMatrixToShow=WorkingTogetherDataToShow.calculation();
+		CleanMatrixToShow();
+		System.out.print("\n mundo de ToShow");
+	}
+	
+	public DoubleMatrix2D GetWorkingTogetherMatrix2DToShow()
+	{
+		return WorkingTogetherMatrixToShow;
 	}
 	
 	
@@ -33,6 +57,7 @@ public class ImproveDiscoverySocialTransformation {
 	public void WTCalculation()
 	{
 		
+		WorkingTogetherMatrixToShow=WorkingTogetherDataToShow.calculation();
 		WorkingTogetherMatrix=WorkingTogetherData.calculation();
 		String resource1="";
 		String resource2="";
@@ -248,11 +273,16 @@ public class ImproveDiscoverySocialTransformation {
 	
 	public void RecalculateSocialRelations(String Analysist, double Value)
 	{
+		cuteValue=Value;
+		
+		//WorkingTogetherDataToShow= new  WorkingtogetherSAR(Data.GetCurrentLog());
+		WorkingTogetherData= new  WorkingtogetherSAR(Data.GetBaseLog());
 		WorkingTogetherMatrix=WorkingTogetherData.calculation();
 		Relations= new HashMap<String,SocialRelation>();
 		String resource1="";
 		String resource2="";
 		Double indicator;
+		
 		for(int k=0;k<WorkingTogetherMatrix.columns();k++)
 		{
 			for(int j=0;j<WorkingTogetherMatrix.rows();j++)
@@ -270,14 +300,12 @@ public class ImproveDiscoverySocialTransformation {
 				}
 				else
 				{
-					
 						WorkingTogetherMatrix.set(k, j, 0);
 						WorkingTogetherMatrix.set(j, k, 0);
-					
 				}
 			}
 		}
-		
+		SetWorkingTogetherToShow();
 	}
 	
 	public String TranslateNode(Integer j)
@@ -285,7 +313,31 @@ public class ImproveDiscoverySocialTransformation {
 		return this.WorkingTogetherData.getOriginatorList().get(j);
 	}
 	
+	public void GetOriginatorList()
+	{
+		//for(int j=0;j<this.WorkingTogetherData.getOriginatorList().size();j++)
+		//	System.out.print("\n"+this.WorkingTogetherData.getOriginatorList().get(j));
+	}
 	
-	
-
+	public void CleanMatrixToShow()
+	{
+		
+		for(int k=0;k<WorkingTogetherMatrixToShow.columns();k++)
+		{
+			for(int j=0;j<WorkingTogetherMatrixToShow.rows();j++)
+			{
+				if(k!=j && WorkingTogetherMatrixToShow.get(k,j)>=cuteValue && WorkingTogetherMatrixToShow.get(j,k)>=cuteValue)
+				{}
+				else
+				{
+						WorkingTogetherMatrixToShow.set(j, k, 0);
+						WorkingTogetherMatrixToShow.set(k, j, 0);
+				}
+			}
+		}
+		
+	}
+		
 }
+
+

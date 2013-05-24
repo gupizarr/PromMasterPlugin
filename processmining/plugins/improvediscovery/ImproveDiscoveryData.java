@@ -60,9 +60,23 @@ public class ImproveDiscoveryData {
   
   public void InicializatePerformanceData()
   {
-		this.PerformanceData= new ImproveDiscoveryPerformanceData(log);
+		this.PerformanceData= new ImproveDiscoveryPerformanceData(this.transformLog);
 
   }
+  
+  public void ResetToOriginalLog()
+  {
+		transformLog = (XLog) log.clone();
+		workingLog= (XLog) log.clone();
+		
+  }
+  
+  public void SetTransformLogFromWorkingLog()
+  {
+	  transformLog=(XLog) workingLog.clone();
+	  
+  }
+  
   
   public XLog GetWorkingLog()
   {
@@ -92,7 +106,12 @@ public class ImproveDiscoveryData {
  
   public XLog GetCurrentLog()
   {
-	  return transformLog;
+	  return this.workingLog;
+  }
+  
+  public XLog GetBaseLog()
+  {
+	  return this.transformLog;
   }
   
   public void ResetPerformanceData()
@@ -102,7 +121,7 @@ public class ImproveDiscoveryData {
   
   public void SetCurrentLog(XLog AuxLog)
   {
-	  transformLog=AuxLog;
+	  this.workingLog=AuxLog;
   }
   
   public void RemoveTrace(XTrace trace)
@@ -211,9 +230,9 @@ public class ImproveDiscoveryData {
 	  return workingLog;
   }
   
-  public void ReturnToWorkingLog()
+  public void ReturnToBaseLog()
   {
-		transformLog = (XLog) workingLog.clone();
+	  workingLog = (XLog) this.transformLog.clone();
 
   }
   

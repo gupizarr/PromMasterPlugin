@@ -31,7 +31,7 @@ public class ClusterParameters  extends JPanel{
 	 */
 	private static final long serialVersionUID = 1L;
 	protected ArrayList<JCheckBox> ClusteredgesConcurrencyActiveBox;
-	protected ArrayList<JCheckBox> SubClusteredgesConcurrencyActiveBox;
+	protected ArrayList<JLabel> SubClusteredgesConcurrencyActiveBox;
 	protected Color COLOR_BG = new Color(60, 60, 60);
 	protected Color COLOR_BG2 = new Color(120, 120, 120);
 	protected Color COLOR_FG = new Color(30, 30, 30);
@@ -47,19 +47,29 @@ public class ClusterParameters  extends JPanel{
     protected ArrayList<JLabel> JLabelSubClusterArray;
     protected boolean big= true;
     protected JPanel optionSubclusterCases;
+    protected JPanel  edgesConcurrencyHeaderPanel;
+    
 	public ClusterParameters(ImproveDiscoveryTransformation Transformation) {
 		// TODO Auto-generated constructor stub
 		this.DataTransformation=Transformation;
 		
 		this.smallFont = new Font("11f", 12, 10);
 		 ClusteredgesConcurrencyActiveBox= new ArrayList<JCheckBox>();
-		 int lenght=DataTransformation.GetData().GetCurrentLog().size();
-		 lenght=Math.round(lenght/14)+1;
-		 SubClusteredgesConcurrencyActiveBox= new ArrayList<JCheckBox>();
+		 //int lenght=DataTransformation.GetData().GetCurrentLog().size();
+		 //lenght=Math.round(lenght/14)+1;
+		 SubClusteredgesConcurrencyActiveBox= new ArrayList<JLabel>();
          JLabelClusterArray=new ArrayList();
          JLabelSubClusterArray= new ArrayList<JLabel>();
-
-         ClustersParameters(true);
+ 		
+         this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+ 		
+         this.setBackground(COLOR_BG2);
+ 		
+         this.setOpaque(true);
+ 		
+         this.setLayout(new BorderLayout());
+         AddHeader();
+         ClustersParameters();
 		 repaint();
 	}
 	
@@ -79,30 +89,40 @@ public class ClusterParameters  extends JPanel{
 	}
 
 	
-	public void ClustersParameters(boolean clusterCheck)
+	public void ResetPanel()
 	{
-		
-		// concurrency edge transformer slider panel
+	
+		 ClusteredgesConcurrencyActiveBox= new ArrayList<JCheckBox>();
+		 SubClusteredgesConcurrencyActiveBox= new ArrayList<JLabel>();
+         JLabelClusterArray=new ArrayList();
+         JLabelSubClusterArray= new ArrayList<JLabel>();
+         this.remove(concurrencySliderPanel);
+        
+         checkClusterContainer.removeAll();
+ 		 edgesConcurrencyHeaderPanel.removeAll();
+ 		 concurrencySliderPanel.remove(checkClusterContainer);
+ 		 concurrencySliderPanel.remove(option_panel);
+ 		 concurrencySliderPanel.remove(optionSubclusterCases);
+         concurrencySliderPanel.repaint();
+         AddHeader();
+         ClustersParameters();
+		 repaint();		
+	}
+	
+	public void AddHeader()
+	{
+		// concurrency edge transformerñ slider panel
 		concurrencySliderPanel = new JPanel();
 		concurrencySliderPanel.setOpaque(false);
-		concurrencySliderPanel.setLayout(null);//new BoxLayout(concurrencySliderPanel, BoxLayout.PAGE_AXIS));
-		
+		concurrencySliderPanel.setLayout(null);//new BoxLayout(concurrencySliderPanel, BoxLayout.PAGE_AXIS));	
 		// concurrency edge preserve threshold slider panel
 		JPanel concurrencyPreservePanel = new JPanel();
 		concurrencyPreservePanel.setOpaque(false);
 		concurrencyPreservePanel.setLayout(new BorderLayout());
-		
-
 		// setup concurrency parent panel
-		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		this.setBackground(COLOR_BG2);
-		this.setOpaque(true);
-		this.setLayout(new BorderLayout());
-	
-		
+
 	    //Checkbox de grupos humanos
-		JPanel edgesConcurrencyHeaderPanel = new JPanel();
-	   
+		edgesConcurrencyHeaderPanel = new JPanel();   
 		checkClusterContainer= new JPanel();
 		checkClusterContainer.setOpaque(false);
 		JLabel data= new JLabel(LogData());
@@ -110,9 +130,13 @@ public class ClusterParameters  extends JPanel{
 		//Label Number of Clusters
 		JLabel title= new JLabel("Select Number of clusters");
 		edgesConcurrencyHeaderPanel.add(title);
+	}
+	
+	public void ClustersParameters()
+	{
+
 		//Numbers of clusters
 		numberOfClusters = new JComboBox();
-		
 		numberOfClusters.setPreferredSize(new Dimension(40, 25));
 		numberOfClusters.setMaximumSize(new Dimension(40,25));
 		for(int j=1;j<=DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCase();j++ )
@@ -120,7 +144,9 @@ public class ClusterParameters  extends JPanel{
 			ClusteredgesConcurrencyActiveBox.add(new JCheckBox("Cluster "+j));
 			numberOfClusters.addItem(j);
 		}
+		
 		numberOfClusters.setSelectedIndex(2);   
+		
 		edgesConcurrencyHeaderPanel.add(numberOfClusters);
 		
 		AddClustersParameters(true);
@@ -131,9 +157,35 @@ public class ClusterParameters  extends JPanel{
 		edgesConcurrencyHeaderPanel.setPreferredSize(new Dimension(150,70));
 		this.add(edgesConcurrencyHeaderPanel, BorderLayout.NORTH);
 		this.add(concurrencySliderPanel, BorderLayout.CENTER);
-	    
 		buildComponent(110,530,checkClusterContainer,concurrencySliderPanel,0);
 
+
+	}
+	
+	public void ResetClustersParameters()
+	{
+		//Numbers of clusters
+		numberOfClusters = new JComboBox();
+		numberOfClusters.setPreferredSize(new Dimension(40, 25));
+		numberOfClusters.setMaximumSize(new Dimension(40,25));
+		for(int j=1;j<=DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCase();j++ )
+		{
+			ClusteredgesConcurrencyActiveBox.add(new JCheckBox("Cluster "+j));
+			numberOfClusters.addItem(j);
+		}
+		numberOfClusters.setSelectedIndex(2);   
+		
+		edgesConcurrencyHeaderPanel.add(numberOfClusters);
+		
+		AddClustersParameters(true);
+		//edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
+		edgesConcurrencyHeaderPanel.setOpaque(false);
+		edgesConcurrencyHeaderPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
+		edgesConcurrencyHeaderPanel.add(Box.createVerticalGlue());   		
+		edgesConcurrencyHeaderPanel.setPreferredSize(new Dimension(150,70));
+		this.add(edgesConcurrencyHeaderPanel, BorderLayout.NORTH);
+		this.add(concurrencySliderPanel, BorderLayout.CENTER);
+		buildComponent(110,530,checkClusterContainer,concurrencySliderPanel,0);
 
 	}
 	
@@ -299,7 +351,7 @@ public class ClusterParameters  extends JPanel{
 						int value= Integer.parseInt(label.getName().substring(0,label.getName().indexOf("-")));
 						int value_subcluster=Integer.parseInt(label.getName().substring(label.getName().indexOf("-")+1))-1;
 
-						if(label.getText().equals("+") && SubClusteredgesConcurrencyActiveBox.get(value_subcluster).isSelected())
+						if(label.getText().equals("+"))
 						{
 							for(int j=0; j<JLabelSubClusterArray.size();j++)
 							{
@@ -362,14 +414,14 @@ public class ClusterParameters  extends JPanel{
 			}
 			
 		}
-		System.out.print("\n Iniciando los sublabels en index:"+index);
+		
 		for(int c=0;c<sub_check_boxes;c++)		
 		{
 				JLabel label= JLabelSubClusterArray.get(index);				
-				JCheckBox checkBox=SubClusteredgesConcurrencyActiveBox.get(index);
+				JLabel name=SubClusteredgesConcurrencyActiveBox.get(index);
 		        JPanel cluster_panel= new JPanel();					
 				cluster_panel.add(label,BorderLayout.LINE_START);
-				cluster_panel.add(checkBox,BorderLayout.PAGE_START);
+				cluster_panel.add(name,BorderLayout.PAGE_START);
 				cluster_panel.setOpaque(false);
 			    Insets insets = option_panel.getInsets();
 			    margin_top=insets.top+5+28*c;
@@ -411,6 +463,24 @@ public class ClusterParameters  extends JPanel{
 		panel.repaint();	
 	}
 	
+	public boolean LabelExist(String name)
+	{
+		for(int j=0;j<JLabelSubClusterArray.size();j++)
+			if(JLabelSubClusterArray.get(j).getName().toString().equals(name))
+				return true;
+		
+		return false;
+		
+	}
+	
+	public JLabel GetJLabelSubClusterArray(String name)
+	{
+		for(int j=0;j<JLabelSubClusterArray.size();j++)
+			if(JLabelSubClusterArray.get(j).getName().toString().equals(name))
+				return JLabelSubClusterArray.get(j);
+		
+		return null;
+	}
 	public void AddClusterOption(int count)
 	{
 	         	CheckBoxClusterBuilder(count);
@@ -449,24 +519,28 @@ public class ClusterParameters  extends JPanel{
 					{
 
 							number=c+1;
-							label= new JLabel("+");
-							JLabelSubClusterArray.add(label);
-					  		label.setName(count+"-"+number);
+							if(!LabelExist(count+"-"+number))
+							{
+								label= new JLabel("+");
+								label.setName(count+"-"+number);
+								JLabelSubClusterArray.add(label);
+							}
+							else
+							label=GetJLabelSubClusterArray(count+"-"+number);
+							
 							
 							if(c<sub_check_boxes-1)
 								check_cases=14;
 							else
 								check_cases=cases%14;
-							JCheckBox check=new JCheckBox("Sub-Cluster "+number+"["+check_cases+"]");
-							check.setUI(new SlickerCheckBoxUI());
-							check.setOpaque(false);
-							check.setForeground(COLOR_FG);
-							check.setFont(new Font("11f", 12, 10));
-							check.setSelected(true);
-							check.setToolTipText("<html>This control select the clusters of the model" +"visualization</html>");			
-							check.setName(""+count+"-"+c);
-							check.setForeground(COLOR_FG);	
-							SubClusteredgesConcurrencyActiveBox.add(check);
+							JLabel name=new JLabel("Agrupation "+number+"["+check_cases+"]");
+							name.setOpaque(false);
+							name.setForeground(COLOR_FG);
+							name.setFont(new Font("11f", 12, 10));
+							name.setToolTipText("<html>This control select the clusters of the model" +"visualization</html>");			
+							name.setName(""+count+"-"+c);
+							name.setForeground(COLOR_FG);	
+							SubClusteredgesConcurrencyActiveBox.add(name);
 							
 						    DrillDownToBottom(label,check_cases);
 

@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.deckfour.xes.classification.XEventClasses;
 import org.deckfour.xes.info.XLogInfo;
 import org.deckfour.xes.info.XLogInfoFactory;
 import org.deckfour.xes.model.XAttributeMap;
 import org.deckfour.xes.model.XEvent;
-import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.deckfour.xes.model.impl.XAttributeMapImpl;
 import org.deckfour.xes.model.impl.XAttributeMapLazyImpl;
@@ -55,6 +55,11 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	return 	SocialTransformation;
 	}
 	
+	public void SetSocialTransformation(ImproveDiscoverySocialTransformation ST)
+	{
+	SocialTransformation=ST;
+	}
+	
 	public ImproveDiscoveryData GetData()
 	{
 		return Data;
@@ -74,12 +79,12 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	{
 		 ArrayList<XTrace> KeptXTrace= new ArrayList<XTrace>();
      	
-		 for(int i=0; i<Data.GetCurrentLog().size(); i++)
+		 for(int i=0; i<Data.GetBaseLog().size(); i++)
 	     {
 	    	   
 			    if(Data.GetPerformanceData().getFinalTimes()[i]>=minTimeValue && Data.GetPerformanceData().getFinalTimes()[i]<=maxTimeValue)
 			    {    		 
-	       		 KeptXTrace.add(Data.GetCurrentLog().get(i));
+	       		 KeptXTrace.add(Data.GetBaseLog().get(i));
 			    }
 	    	 
 	     }
@@ -130,13 +135,13 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	public void ClearRemovedClusters()
 	{
 		RemovedClusters.clear();
-		Data.ReturnToWorkingLog();
+		Data.ReturnToBaseLog();
 
 	}
 	
 	public void RestoreCluster(String cluster)
 	{
-		this.GetData().ReturnToWorkingLog();
+		this.GetData().ReturnToBaseLog();
 			
 	    if(RemovedClusters.contains(cluster))
 	    {
@@ -209,7 +214,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	public void ClearTraceList()
 	{
         RemovedParticularCases.clear();
-		this.GetData().ReturnToWorkingLog();
+		this.GetData().ReturnToBaseLog();
 
 	}
 	
@@ -267,9 +272,9 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
         	 AllFilterTraces.addAll(this.ClusterTransformation.GetClusterData().GetActivityClusters().get(count));
 		  }
 		 			
-		      for (int u=0; u<this.Data.GetCurrentLog().size(); u++)
+		      for (int u=0; u<this.Data.GetBaseLog().size(); u++)
  			  {
-		 	       XTrace trace = this.Data.GetCurrentLog().get(u);   
+		 	       XTrace trace = this.Data.GetBaseLog().get(u);   
 		 		   removeTrace=false; 
               	 
 		 			for(int c=0;c<AllFilterTraces.size();c++)
@@ -307,7 +312,6 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			  XEvent event= new XEventImpl();
 			  trace.add(event);
 			  Data.GetCurrentLog().add(trace);
-			  System.out.print("\n Esta vacio");
 			  this.Data.IsEmpty(true);
 		  }
 		  BuiltHeuristic();
@@ -368,6 +372,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			  if(Data.GetCurrentLog().size()>0)
 			  {
 			  XLogInfo Info=XLogInfoFactory.createLogInfo(this.Data.GetCurrentLog());
+			  System.out.print("\n Number of events: "+Info.getNumberOfEvents());
 			  HeuristicsMiner fhm = new HeuristicsMiner(context, Data.GetCurrentLog(),Info ); 
 			  this.Data.setHeuristicNet(fhm.mine()); 
 	
@@ -387,6 +392,10 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 
 			  	this.Data.getHeuristicsNetGraph().getActivities().removeAll(act);
 			  }
+			  
+			  //update socialview
+			  this.SocialTransformation.SetWorkingTogetherToShow();
+			  
 		  }
 		  else
 		  {
@@ -395,7 +404,6 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			  FixLog();
 			  }
 			  
-			  System.out.print("\n Performance analysist");
 			  XLogInfo Info=XLogInfoFactory.createLogInfo(this.Data.GetCurrentLog());
 			  System.out.print("\n trace size:"+this.Data.GetCurrentLog().size());
 			  HeuristicsMiner fhm = new HeuristicsMiner(context, Data.GetCurrentLog(),Info ); 
@@ -444,7 +452,6 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 		    Rols= this.SocialTransformation.TranslateNode(Integer.parseInt(Rols));
 		    
 		    Traces.clear();
-				System.out.print("\n Remove "+Rols);
 
 		    if(!RemovedResources.contains(Rols))
 		    {
@@ -457,21 +464,18 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	  {
 			int count=0;
 	        XEvent[] remove;
-	        XTrace[] removeTrace= new XTrace[this.Data.GetCurrentLog().size()];
+	        XTrace[] removeTrace= new XTrace[this.Data.GetBaseLog().size()];
 	        String resource;
 	
 	        int remove_trace_count=0;
-			System.out.print("\n Log size before:"+ this.GetData().GetCurrentLog().size());
+			System.out.print("\n Log size before:"+ this.GetData().GetBaseLog().size());
 
 			//por cada persona
 	    	for(int j=0;j<RemovedResources.size();j++)
-	 		{
-	    		//abro el log
-	          for (int u=0; u<this.Data.GetCurrentLog().size(); u++)
-			  {
-	        	  
-	        	  XTrace trace = this.Data.GetCurrentLog().get(u); 
-	            	
+	 		{//abro el log
+	          for (int u=0; u<this.Data.GetBaseLog().size(); u++)
+			  {	        	  
+	        	  XTrace trace = this.Data.GetBaseLog().get(u); 	
 	        	    count=0;
 	        	    remove= new XEvent[trace.size()];
 	           	    //si es que tiene eventos
@@ -480,17 +484,14 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	        	    	//por cada evento
 							for (XEvent event : trace) 
 							{		
-			        	            resource=XLogInfoFactory.createLogInfo(this.Data.GetCurrentLog()).getResourceClasses().getClassOf(event).getId();
-					     			
-			        	            //si el evento es ejecutado por la persona que se quiere remover
+			        	            resource=XLogInfoFactory.createLogInfo(this.Data.GetBaseLog()).getResourceClasses().getClassOf(event).getId();
+					     		    //si el evento es ejecutado por la persona que se quiere remover
 			        	            if(resource.equals(RemovedResources.get(j)))
 					     			{
-					     				//System.out.print("\n Remove "+RemovedResources.get(j));
 					     				     		remove[count]=event;
 					     				     		count++;	     				          
 					     			}  		
 							}
-							
 							
 							for(int g=0;g<count;g++)
 							{
@@ -503,29 +504,26 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 									remove_trace_count++;
 								}
 							}
-						//count=0;
+						count=0;
 	        	    }
 			  }  
 	 		}
-	    	 
-	    	
+	    	     	
 	    	//Luego para el log
-	    	 for(int s=0; s<Data.GetCurrentLog().size();s++)
+	    	 for(int s=0; s<Data.GetBaseLog().size();s++)
 	         {
 	       	  	boolean existe=false;
 	       	  	for(int c=0; c<removeTrace.length;c++)
 	       	  	{
 	       	  		//busco si existe actualemnte en el log
-	       	  		if(removeTrace[c]==Data.GetCurrentLog().get(s))
-	       	  			existe=true;
+	       	  		if(removeTrace[c]==Data.GetBaseLog().get(s))
+	       	  		existe=true;
 	       	  	}
-	       	  	
-	       	  	//si no existe  lo borro
+	    	  	//si no existe  lo borro
 	       	  	if(!existe)
-	       	  		Traces.add(Data.GetCurrentLog().get(s));
+	       	  		Traces.add(Data.GetBaseLog().get(s));
 	         }
 
-	         System.out.print("Finalmente tendra:"+Traces.size());
 	 		
 	          UpdateGraph(false);
 	  }
@@ -533,7 +531,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	  
       public void RestoreSubCluster(int cluster,int  trace_ini, int trace_last)
       {
-  		this.GetData().ReturnToWorkingLog();
+  		this.GetData().ReturnToBaseLog();
   		
   		for(int j=trace_ini;j<trace_last;j++)
   		{
@@ -550,7 +548,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
       
       public void RestoreCase(int cluster,int  caseIndex)
       {
-  		this.GetData().ReturnToWorkingLog();
+  		this.GetData().ReturnToBaseLog();
   		
   
 		List<String> RemovedCase=this.ClusterTransformation.GetClusterData().GetActivityClusters().get(cluster).get(caseIndex);
@@ -565,7 +563,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 
 	  public void AddSocialResource(String resource)
 	  {
-	     Data.SetCurrentLog((XLog) Data.GetOriginalWorkingLog().clone());
+	     //Data.SetCurrentLog((XLog) Data.GetOriginalWorkingLog().clone());
 	     RemovedResources.remove(resource);
 		 SocialFilter("");
 	  }
@@ -583,22 +581,19 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
     		 Team=this.SocialTransformation.GetGroupsOneTwo();
 		  else
 			 Team=this.SocialTransformation.GetTeamsWT().get(Integer.parseInt(GroupName));
-			 
+
 			 for(int j=0; j<Team.size();j++)
 			 {
 				String person= this.SocialTransformation.TranslateNode(Team.get(j));
-				    
 				if(!RemovedResources.contains(person))
 				{
 				RemovedResources.add(person);
-				}
-				    
-			
+				}			    
 			
 			 }
 			  Traces.clear();
 			  SocialFilterAll();
-		      System.out.print("\n Quedan "+this.GetData().GetCurrentLog().size()+ "Traces");
+
 	  }
 	  
 	  public void RestoreGroup(String GroupName)
@@ -619,6 +614,15 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			 }
 		
 	  }
+	  
+	  public void GetCurrentResourceList()
+	  {
+	    XLogInfo  summary = XLogInfoFactory.createLogInfo(this.GetData().GetCurrentLog());
+
+		XEventClasses originators = summary.getResourceClasses();
+	
+ 	  }	
+
 	  
 
 }

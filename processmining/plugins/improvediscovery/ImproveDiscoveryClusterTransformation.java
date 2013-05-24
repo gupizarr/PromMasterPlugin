@@ -139,10 +139,20 @@ public class ImproveDiscoveryClusterTransformation {
 										ClusterData.getScaleFactor(), // viene dato idem anterior
 										ClusterData.GetGapPenalty(), // viene dado 
 										1.2f);
-	
+		
 		CalculateResult(traceAlignTransformer.getAlignments(ClusterData.GetNumberOfCluster()));
 	}
 	
+	private int GetEstimateNumberOfClusters()
+	{
+		int cases=ClusterData.GetNumberOfCase();
+		if(Math.round(cases/3)>0)
+			return 3;
+		else if(Math.round(cases/2)>0)
+			return 2;
+		else
+			return -1;
+	}
 	
     private void computeDistanceSimilarity() 
     {	

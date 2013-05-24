@@ -50,12 +50,7 @@ public class ImproveDiscoveryClusterData {
 	int kGramSize = 3;
 
 
-
-
-
 	int prevNoClusters = -1;
-	private int noClusters;
-
 	private int incrementLikeSubstitutionScore = 3; // default value for incrementing like substitution score
 	private int gapPenalty = Integer.MIN_VALUE; // if set to this, it will be automatically assigned in alignment
 	private float scaleFactor = 0.1f; // default value
@@ -70,7 +65,7 @@ public class ImproveDiscoveryClusterData {
 	// List of unique encoded traces
 	List<String> uniqueEncodedTraceList;
 
-
+    protected int numberClusters;
 
 
 
@@ -79,10 +74,10 @@ public class ImproveDiscoveryClusterData {
 	int MaxPriority = 10;
 	int numColumnSorts;
 
-	public ImproveDiscoveryClusterData(XLog log, int noClusters)  {
+	public ImproveDiscoveryClusterData(XLog log,int numberClusters)  {
 		// TODO Auto-generated constructor stub
-		this.noClusters=noClusters;
 		this.mainLog=log;      
+		this.numberClusters=numberClusters;
 	}
 	
 	public int GetNumberOfCase()
@@ -110,10 +105,12 @@ public class ImproveDiscoveryClusterData {
 		return numberOfClusterCase;
 	}
 	
+	
 	public void SetNumberOfClusters(int newNumber )
 	{
-		noClusters=	newNumber;
+		this.numberClusters=	newNumber;
 	}
+
 	
 	public void SetFeatureMatrix(int [][] featureMatrix)
 	{
@@ -240,7 +237,7 @@ public class ImproveDiscoveryClusterData {
 	
 	public int GetNumberOfCluster()
 	{
-		return noClusters;
+		return this.numberClusters;
 	}
 	
 	public int GetNumberOfCaseOnCluster(int count)

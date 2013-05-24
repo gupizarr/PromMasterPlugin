@@ -23,7 +23,7 @@ import org.processmining.plugins.heuristicsnet.miner.heuristics.miner.Heuristics
 import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization.AnnotatedVisualizationGenerator;
 import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization.AnnotatedVisualizationSettings;
 import org.processmining.plugins.socialnetwork.miner.SNMinerOptions;
-import org.processmining.plugins.socialnetwork.miner.gui.PanelSimilarTask;
+import org.processmining.plugins.socialnetwork.miner.gui.PanelWorkingTogether;
 import org.processmining.plugins.socialnetwork.miner.miningoperation.BasicOperation;
 import org.processmining.plugins.socialnetwork.miner.miningoperation.OperationFactory;
 import org.processmining.plugins.socialnetwork.miner.miningoperation.UtilOperation;
@@ -67,8 +67,8 @@ public class ImproveDiscoveryPlugin {
 	
 	  //Social
 		
-	    PanelSimilarTask input = new PanelSimilarTask();
-	  	int indexType = SNMinerOptions.SIMILAR_TASK + input.getSimilarTaskSetting();
+	    PanelWorkingTogether input = new PanelWorkingTogether();
+	  	int indexType = SNMinerOptions.WORKING_TOGETHER + input.getWorkingTogetherSetting();
 	  	baseOprtation = OperationFactory.getOperation(indexType, log);
 		DiscoveryData.SetDoubleMatrix2D(baseOprtation.calculation());
 		DiscoveryData.SetOriginatorList(baseOprtation.getOriginatorList());

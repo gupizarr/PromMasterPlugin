@@ -8,6 +8,7 @@ import java.awt.Insets;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -52,6 +53,7 @@ public class SocialParametersPanel extends JPanel {
 	protected ArrayList<JLabel> JLabelGroups;
 	protected ArrayList<JCheckBox> JCheckBoxResources;
 	protected ArrayList<JCheckBox> JCheckBoxGroups;
+	protected JPanel filterPanel;
 
 
 	
@@ -135,9 +137,19 @@ public class SocialParametersPanel extends JPanel {
 	public void RationFilterPanel()
 	{
 		// concurrency edge transformer slider panel
-		JPanel filterPanel = new JPanel();
+		
+		
+		if(Arrays.asList(MainPanel.getComponents()).contains(filterPanel))
+		{
+			MainPanel.remove(filterPanel);
+			filterPanel.removeAll();
+		}
+		else
+		{
+		 filterPanel = new JPanel();
 		filterPanel.setOpaque(false);
 		filterPanel.setLayout(null);
+		}
 		this.buildComponent(0,280, 300, filterPanel,MainPanel ,0,380);
 	
 		
@@ -188,7 +200,7 @@ public class SocialParametersPanel extends JPanel {
 			
 			if(value>0)
 			{
-				
+
 				DataTransformation.GetSocialTransformation().RecalculateSocialRelations("WT",value);
 				DataTransformation.GetSocialTransformation().SearchGroups();
 				
@@ -228,6 +240,37 @@ public class SocialParametersPanel extends JPanel {
 		filterPanel.setOpaque(false);
 	
 	}
+	
+	public void ResetPanel()
+	{
+		
+		JCheckBoxResources= new ArrayList<JCheckBox>();
+		JCheckBoxGroups= new ArrayList<JCheckBox>();		
+		JLabelResources= new ArrayList<JLabel>();
+		JLabelGroups= new ArrayList<JLabel>();
+
+		this.MainPanel.remove(GroupPanel);
+		GroupPanel= new JPanel();
+		GroupPanel.setOpaque(false);
+		buildComponent(5,80,330,GroupPanel,MainPanel,0,0);	
+		
+		this.MainPanel.remove(RelationsPanel);
+		RelationsPanel= new JPanel();
+		RelationsPanel.setOpaque(false);
+		buildComponent(5,125,330,RelationsPanel,MainPanel,90,0);
+
+		this.MainPanel.remove(PeoplesPanel);
+		PeoplesPanel= new JPanel();
+		PeoplesPanel.setOpaque(false);
+		buildComponent(5,95,330,PeoplesPanel,MainPanel,210,0);
+		this.add(MainPanel, BorderLayout.CENTER);
+		
+		RationFilterPanel();
+		AddGroupCheckBoxes();
+		MainPanel.repaint();
+		//this.repaint();
+	}
+	
 	public void PeopleCheckBoxes(boolean group_check)
 	{
 
@@ -350,6 +393,7 @@ public class SocialParametersPanel extends JPanel {
 						{
 						chec= new JCheckBox(DataTransformation.GetSocialTransformation().TranslateNode(Members.get(c)));
 						JCheckBoxResources.add(chec);
+						chec.setUI(new SlickerCheckBoxUI());
 						chec.setSelected(true);
 						chec.setOpaque(false);
 						}
@@ -382,7 +426,6 @@ public class SocialParametersPanel extends JPanel {
 	public void AddResourceToRelationPanel(ArrayList<Integer> Members)
 	{
 		this.RelationsPanel.setPreferredSize(new Dimension(90,300));
-		this.RelationsPanel.setOpaque(true);
 		for(int j=0; j<Members.size();j++)
 		{
 			JCheckBox chec=getJCheckBoxResource(""+Members.get(j));
@@ -392,6 +435,8 @@ public class SocialParametersPanel extends JPanel {
 			JCheckBoxResources.add(chec);
 			chec.setSelected(true);
 			chec.setOpaque(false);
+			chec.setUI(new SlickerCheckBoxUI());
+
 			}
 		
 			chec.setFont(resourceFont);
@@ -410,6 +455,8 @@ public class SocialParametersPanel extends JPanel {
 		JLabelGroups.add(Grouplabel);
 		
 		JCheckBox check= new JCheckBox("Group "+""+num_group);
+		check.setUI(new SlickerCheckBoxUI());
+
 		JCheckBoxGroups.add(check);
 		check.setFont(resourceFont);
 		check.setSelected(true);
@@ -443,6 +490,7 @@ public class SocialParametersPanel extends JPanel {
 					{
 						number_of_subgroups++;
 					}
+					RelationsPanel.setPreferredSize(new Dimension(120,300));
 					if(number_of_subgroups>1)
 					{
 						int options=0;
@@ -569,6 +617,8 @@ public class SocialParametersPanel extends JPanel {
 				JPanel panel= new JPanel();
 				checkOneTwo.setFont(resourceFont);
 				checkOneTwo.setName("-1");		
+				checkOneTwo.setUI(new SlickerCheckBoxUI());
+
 				panel.add(label);
 				panel.add(checkOneTwo);
 				JLabelGroups.add(label);
@@ -624,6 +674,7 @@ public class SocialParametersPanel extends JPanel {
 										JPanel panel2= new JPanel();
 										panel2.add(label2);
 										panel2.add(ch);
+										panel2.setOpaque(false);
 										RelationsPanel.add(panel2);
 										RelationsPanel.revalidate();
 										RelationsPanel.repaint();	
