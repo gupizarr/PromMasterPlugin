@@ -85,6 +85,7 @@ public class SocialParametersPanel extends JPanel {
 		PeoplesPanel.setOpaque(false);
 		buildComponent(5,95,330,PeoplesPanel,MainPanel,210,0);
 		this.add(MainPanel, BorderLayout.CENTER);
+		
 		RationFilterPanel();
 		AddGroupCheckBoxes();
 		this.repaint();
@@ -118,11 +119,9 @@ public class SocialParametersPanel extends JPanel {
 		
 		JLabel label=new JLabel("Select a type of analysist");
 		Options= new JComboBox();
-		Options.addItem("Working-Together");
+		Options.addItem("Working Together");
 		Options.addItem("Similar Task");
-		Options.addItem("Handover of work");
-		Options.addItem("Frecuency");
-
+		Options.addItem("Handover of Work");
 		edgesConcurrencyHeaderPanel.add(label);
 		edgesConcurrencyHeaderPanel.add(Options);	
 		edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
@@ -201,8 +200,21 @@ public class SocialParametersPanel extends JPanel {
 			if(value>0)
 			{
 
+				if(Options.getSelectedItem().toString().equals("Working Together"))
+				{
 				DataTransformation.GetSocialTransformation().RecalculateSocialRelations("WT",value);
-				DataTransformation.GetSocialTransformation().SearchGroups();
+				DataTransformation.GetSocialTransformation().SearchGroups(DataTransformation.GetSocialTransformation(). GetMatrix2D("WT"));
+				}	
+				else if(Options.getSelectedItem().toString().equals("Similar Task"))
+				{
+					DataTransformation.GetSocialTransformation().RecalculateSocialRelations("ST",value);
+					DataTransformation.GetSocialTransformation().SearchGroups(DataTransformation.GetSocialTransformation(). GetMatrix2D("ST"));
+								
+				}
+				else
+				{
+					
+				}
 				
 				RelationsPanel.removeAll();
 			    PeoplesPanel.removeAll();
@@ -213,7 +225,7 @@ public class SocialParametersPanel extends JPanel {
 				
 				AddGroupCheckBoxes();
 				
-				
+				GroupPanel.setOpaque(true);
 				GroupPanel.repaint();
 				
 			}
@@ -243,40 +255,34 @@ public class SocialParametersPanel extends JPanel {
 	
 	public void ResetPanel()
 	{
+		this.filterSlider.setValue(0);
 		
-		JCheckBoxResources= new ArrayList<JCheckBox>();
-		JCheckBoxGroups= new ArrayList<JCheckBox>();		
-		JLabelResources= new ArrayList<JLabel>();
-		JLabelGroups= new ArrayList<JLabel>();
+		if(Options.getSelectedItem().toString().equals("Working Together"))
+		{
+		DataTransformation.GetSocialTransformation().RecalculateSocialRelations("WT",0);
+		DataTransformation.GetSocialTransformation().SearchGroups(DataTransformation.GetSocialTransformation(). GetMatrix2D("WT"));
+		}	
+		else if(Options.getSelectedItem().toString().equals("Similar Task"))
+		{
+	    DataTransformation.GetSocialTransformation().RecalculateSocialRelations("ST",0);
+		DataTransformation.GetSocialTransformation().SearchGroups(DataTransformation.GetSocialTransformation(). GetMatrix2D("ST"));
+						
+		}
+		RelationsPanel.removeAll();
+	    PeoplesPanel.removeAll();
 
-		this.MainPanel.remove(GroupPanel);
-		GroupPanel= new JPanel();
-		GroupPanel.setOpaque(false);
-		buildComponent(5,80,330,GroupPanel,MainPanel,0,0);	
-		
-		this.MainPanel.remove(RelationsPanel);
-		RelationsPanel= new JPanel();
-		RelationsPanel.setOpaque(false);
-		buildComponent(5,125,330,RelationsPanel,MainPanel,90,0);
-
-		this.MainPanel.remove(PeoplesPanel);
-		PeoplesPanel= new JPanel();
-		PeoplesPanel.setOpaque(false);
-		buildComponent(5,95,330,PeoplesPanel,MainPanel,210,0);
-		this.add(MainPanel, BorderLayout.CENTER);
-		
-		RationFilterPanel();
+	    RelationsPanel.repaint();
+	    PeoplesPanel.repaint();
+	    
 		AddGroupCheckBoxes();
-		MainPanel.repaint();
-		//this.repaint();
+	
+		
 	}
 	
 	public void PeopleCheckBoxes(boolean group_check)
 	{
 
-				
-				
-				
+							
 				edgesConcurrencyActiveBox= new JCheckBox[DataDiscovery.Resources.length];
 				for(int count=0; count<DataDiscovery.Resources.length;count++) {
 			
@@ -453,10 +459,9 @@ public class SocialParametersPanel extends JPanel {
 		JLabel Grouplabel= new JLabel("+");
 		Grouplabel.setName(""+num_group);
 		JLabelGroups.add(Grouplabel);
-		
 		JCheckBox check= new JCheckBox("Group "+""+num_group);
 		check.setUI(new SlickerCheckBoxUI());
-
+       
 		JCheckBoxGroups.add(check);
 		check.setFont(resourceFont);
 		check.setSelected(true);
@@ -599,6 +604,93 @@ public class SocialParametersPanel extends JPanel {
 	}
 		
 
+	public void AddGroupOfTwo()
+	{
+		JLabel label= new JLabel("+");
+		final JCheckBox checkOneTwo= new JCheckBox("Others");
+		checkOneTwo.setSelected(true);
+		JPanel panel= new JPanel();
+		checkOneTwo.setFont(resourceFont);
+		checkOneTwo.setName("-1");		
+		checkOneTwo.setUI(new SlickerCheckBoxUI());
+
+		panel.add(label);
+		panel.add(checkOneTwo);
+		JLabelGroups.add(label);
+		panel.setOpaque(false);
+		GroupPanel.add(panel);
+		label.addMouseListener(new MouseListener(){
+
+			public void mouseClicked(MouseEvent e) {}
+			public void mouseEntered(MouseEvent e) {}
+			public void mouseExited(MouseEvent e) {}
+			public void mousePressed(MouseEvent e) 
+			{
+				JLabel label=(JLabel) e.getComponent();
+		    	if(checkOneTwo.isSelected() && label.getText().equals("+"))
+		    	{
+		    		ResetAllChecks();
+				
+		    		label.setText("-");							
+			    
+		    		final ArrayList<Integer> Members=DataTransformation.GetSocialTransformation().GetGroupsOneTwo();
+			
+		    		int indexMember=Members.size();
+		    		int number_of_subgroups=Math.round(Members.size()/11);
+					if(Members.size()%11!=0)
+					{
+					number_of_subgroups++;
+					}
+					else
+					{
+				
+					}
+					if(number_of_subgroups>1)
+					{
+						int options=0;
+						for(int j=0;j<indexMember;j++)
+						{			
+							if(j%11==0)
+							{
+								options++;
+								JLabel label2= new JLabel("+");
+								label2.setName(""+options);
+								JLabelResources.add(label2);						
+					    		int[] MinMax=MaxMinResource(options,Members.size());
+								int min=MinMax[0]+1;
+								JLabel ch=null;
+								
+								if(min!=MinMax[1])
+								ch= new JLabel("Resources "+""+min+"-"+MinMax[1]);
+								else
+								ch= new JLabel("Resources "+""+min);	
+						
+								ch.setFont(resourceFont);
+								JPanel panel2= new JPanel();
+								panel2.add(label2);
+								panel2.add(ch);
+								panel2.setOpaque(false);
+								RelationsPanel.add(panel2);
+								RelationsPanel.revalidate();
+								RelationsPanel.repaint();	
+								AddResourceSubGroupEvent(label2,Members);
+							}
+						}
+					}
+					else
+					{
+						AddResourceToRelationPanel(Members);
+					}
+				}
+		    	else
+		    	{
+		    		ResetAllChecks();
+		    		label.setText("+");
+		    	}
+			}
+			public void mouseReleased(MouseEvent e) {}					
+		});
+	}
 	public void AddGroupCheckBoxes()
 	{
 		JLabelResources.clear();
@@ -606,98 +698,12 @@ public class SocialParametersPanel extends JPanel {
 		JCheckBoxResources.clear();
 		GroupPanel.removeAll();
 		
-		if(Options.getSelectedItem().toString().equals("Working-Together"))	
-		{
-			
+		
 			if(DataTransformation.GetSocialTransformation().GroupOfTwo().size()>0)
 			{
-				JLabel label= new JLabel("+");
-				final JCheckBox checkOneTwo= new JCheckBox("Others");
-				checkOneTwo.setSelected(true);
-				JPanel panel= new JPanel();
-				checkOneTwo.setFont(resourceFont);
-				checkOneTwo.setName("-1");		
-				checkOneTwo.setUI(new SlickerCheckBoxUI());
-
-				panel.add(label);
-				panel.add(checkOneTwo);
-				JLabelGroups.add(label);
-				panel.setOpaque(false);
-				GroupPanel.add(panel);
-				label.addMouseListener(new MouseListener(){
-
-					public void mouseClicked(MouseEvent e) {}
-					public void mouseEntered(MouseEvent e) {}
-					public void mouseExited(MouseEvent e) {}
-					public void mousePressed(MouseEvent e) 
-					{
-						JLabel label=(JLabel) e.getComponent();
-				    	if(checkOneTwo.isSelected() && label.getText().equals("+"))
-				    	{
-				    		ResetAllChecks();
-						
-				    		label.setText("-");							
-					    
-				    		final ArrayList<Integer> Members=DataTransformation.GetSocialTransformation().GetGroupsOneTwo();
-					
-				    		int indexMember=Members.size();
-				    		int number_of_subgroups=Math.round(Members.size()/11);
-							if(Members.size()%11!=0)
-							{
-							number_of_subgroups++;
-							}
-							else
-							{
-						
-							}
-							if(number_of_subgroups>1)
-							{
-								int options=0;
-								for(int j=0;j<indexMember;j++)
-								{			
-									if(j%11==0)
-									{
-										options++;
-										JLabel label2= new JLabel("+");
-										label2.setName(""+options);
-										JLabelResources.add(label2);						
-							    		int[] MinMax=MaxMinResource(options,Members.size());
-										int min=MinMax[0]+1;
-										JLabel ch=null;
-										
-										if(min!=MinMax[1])
-										ch= new JLabel("Resources "+""+min+"-"+MinMax[1]);
-										else
-										ch= new JLabel("Resources "+""+min);	
-								
-										ch.setFont(resourceFont);
-										JPanel panel2= new JPanel();
-										panel2.add(label2);
-										panel2.add(ch);
-										panel2.setOpaque(false);
-										RelationsPanel.add(panel2);
-										RelationsPanel.revalidate();
-										RelationsPanel.repaint();	
-										AddResourceSubGroupEvent(label2,Members);
-									}
-								}
-							}
-							else
-							{
-								AddResourceToRelationPanel(Members);
-							}
-						}
-				    	else
-				    	{
-				    		ResetAllChecks();
-				    		label.setText("+");
-				    	}
-					}
-					public void mouseReleased(MouseEvent e) {}					
-				});
+				AddGroupOfTwo();
 			}
 	
-			
 			for(int j=0;j<DataTransformation.GetSocialTransformation().getNumberOfWorkingTogTeam();j++)
 			{	
 				
@@ -706,6 +712,6 @@ public class SocialParametersPanel extends JPanel {
 			}				
 		}
 	}
-}
+
 
 

@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.processmining.plugins.socialnetwork.miner.miningoperation.BasicOperation;
+import org.processmining.plugins.socialnetwork.miner.miningoperation.similartask.SimilartaskED;
 import org.processmining.plugins.socialnetwork.miner.miningoperation.workingtogether.WorkingtogetherSAR;
 
 import cern.colt.matrix.DoubleMatrix2D;
@@ -17,6 +19,13 @@ public class ImproveDiscoverySocialTransformation {
 	protected WorkingtogetherSAR WorkingTogetherDataToShow;
 	protected DoubleMatrix2D WorkingTogetherMatrixToShow;
 	
+	protected SimilartaskED SimilarTaskData;
+	protected DoubleMatrix2D SimilarTaskMatrix;
+
+	protected SimilartaskED SimilarTaskDataToShow;
+	protected DoubleMatrix2D SimilarTaskMatrixToShow;
+	
+	
 	protected Map<String,SocialRelation> Relations=new HashMap<String,SocialRelation>();
 	private   ArrayList<ArrayList<Integer>> Teams= new ArrayList<ArrayList<Integer>>();
 	protected Map<Double,ArrayList<SocialRelation>> SubGroups=new HashMap<Double,ArrayList<SocialRelation>>();
@@ -27,8 +36,15 @@ public class ImproveDiscoverySocialTransformation {
 		// TODO Auto-generated constructor stub
 		WorkingTogetherData= new  WorkingtogetherSAR(Data.GetBaseLog());
 		WorkingTogetherDataToShow= new  WorkingtogetherSAR(Data.GetWorkingLog());
-
+		SimilarTaskData = new SimilartaskED(Data.GetBaseLog());
+		SimilarTaskDataToShow= new SimilartaskED(Data.GetBaseLog());
+		
 		this.Data=Data;
+	}
+	
+	public SimilartaskED GetSimilarTaskDataToShow()
+	{
+		return  this.SimilarTaskDataToShow;
 	}
 	
 	public WorkingtogetherSAR GetWorkingTogetherDataToShow()
@@ -36,17 +52,43 @@ public class ImproveDiscoverySocialTransformation {
 		return  WorkingTogetherDataToShow;
 	}
 	
+	public void SetSimilarTaskToShow()
+	{
+		SimilarTaskDataToShow=new  SimilartaskED(Data.GetWorkingLog());
+		SimilarTaskMatrixToShow=SimilarTaskDataToShow.calculation();
+		CleanMatrixToShow(SimilarTaskMatrixToShow);		
+	}
+	
 	public void SetWorkingTogetherToShow()
 	{
 		WorkingTogetherDataToShow=new  WorkingtogetherSAR(Data.GetWorkingLog());
 		WorkingTogetherMatrixToShow=WorkingTogetherDataToShow.calculation();
-		CleanMatrixToShow();
-		System.out.print("\n mundo de ToShow");
+		CleanMatrixToShow(WorkingTogetherMatrixToShow);
+
 	}
 	
-	public DoubleMatrix2D GetWorkingTogetherMatrix2DToShow()
+	public DoubleMatrix2D GetMatrix2DToShow(String MatrixName)
 	{
+		if(MatrixName.equals("WT"))
 		return WorkingTogetherMatrixToShow;
+		else if(MatrixName.equals("ST"))
+		return SimilarTaskMatrixToShow;
+		else if(MatrixName.equals("HW"))
+		return null;
+		else
+		return null;
+	}
+	
+	public DoubleMatrix2D GetMatrix2D(String MatrixName)
+	{
+		if(MatrixName.equals("WT"))
+		return WorkingTogetherMatrix;
+		else if(MatrixName.equals("ST"))
+		return SimilarTaskMatrix;
+		else if(MatrixName.equals("HW"))
+		return null;
+		else
+		return null;
 	}
 	
 	
@@ -54,9 +96,41 @@ public class ImproveDiscoverySocialTransformation {
 	{
 		return Teams.size();
 	}
+	
+	public void STCalculation()
+	{
+		Relations.clear();
+		this.SimilarTaskMatrixToShow= this.SimilarTaskDataToShow.calculation();
+		this.SimilarTaskMatrix= this.SimilarTaskData.calculation();
+		String resource1="";
+		String resource2="";
+		double indicator=0;
+		
+		for(int k=0;k<SimilarTaskMatrix.columns();k++)
+		{
+			for(int j=0;j<SimilarTaskMatrix.rows();j++)
+			{
+				if(k!=j && !Relations.containsKey(k+"-"+j) && !Relations.containsKey(j+"-"+k) && SimilarTaskMatrix.get(k,j)>0 && SimilarTaskMatrix.get(j,k)>0)
+				{
+
+				   resource1=SimilarTaskData.getOriginatorList().get(k);
+				   resource2=SimilarTaskData.getOriginatorList().get(j);
+                   indicator= Math.rint(SimilarTaskMatrix.get(k, j)*10)/10;
+                   SocialRelation SR= new SocialRelation(resource1,resource2,indicator);
+                   Relations.put(k+"-"+j, SR);
+
+				}
+			}
+
+		}
+		
+		SearchGroups(SimilarTaskMatrix);
+	}
+	
 	public void WTCalculation()
 	{
 		
+		Relations.clear();
 		WorkingTogetherMatrixToShow=WorkingTogetherDataToShow.calculation();
 		WorkingTogetherMatrix=WorkingTogetherData.calculation();
 		String resource1="";
@@ -83,16 +157,16 @@ public class ImproveDiscoverySocialTransformation {
 
 		}
 		
-		SearchGroups();
+		SearchGroups(WorkingTogetherMatrix);
 	}
 	
-	public void SearchGroups()
+	public void SearchGroups(DoubleMatrix2D matrix)
 	{
 		
 		Teams.clear();
 		GroupOfTwo.clear();
 		boolean isAlreadyInAGroup=false;
-		for(int j=0;j<WorkingTogetherMatrix.columns();j++)
+		for(int j=0;j<matrix.columns();j++)
 		{
 			isAlreadyInAGroup=false;
 			for(int c=0;c<Teams.size();c++)
@@ -105,7 +179,7 @@ public class ImproveDiscoverySocialTransformation {
 			}
 			if(!isAlreadyInAGroup)
 			{
-				ArrayList<Integer> Members=MakeGroups(j,WorkingTogetherMatrix);
+				ArrayList<Integer> Members=MakeGroups(j,matrix);
 				if(Members.size()>2)
 				{
 					Teams.add(Members);
@@ -273,25 +347,47 @@ public class ImproveDiscoverySocialTransformation {
 	
 	public void RecalculateSocialRelations(String Analysist, double Value)
 	{
+
 		cuteValue=Value;
-		
+		Relations= new HashMap<String,SocialRelation>();		
 		//WorkingTogetherDataToShow= new  WorkingtogetherSAR(Data.GetCurrentLog());
-		WorkingTogetherData= new  WorkingtogetherSAR(Data.GetBaseLog());
-		WorkingTogetherMatrix=WorkingTogetherData.calculation();
-		Relations= new HashMap<String,SocialRelation>();
+		if(Analysist.equals("WT"))
+		{
+			WorkingTogetherData= new  WorkingtogetherSAR(Data.GetBaseLog());
+			WorkingTogetherMatrix=WorkingTogetherData.calculation();
+			ApplyValueThredhold(WorkingTogetherMatrix,WorkingTogetherData,Value);
+			SetWorkingTogetherToShow();
+
+		}
+		else
+		{
+			SimilarTaskData=new SimilartaskED(Data.GetBaseLog());
+			SimilarTaskMatrix=SimilarTaskData.calculation();
+			ApplyValueThredhold(SimilarTaskMatrix,SimilarTaskData,Value);
+			SetSimilarTaskToShow();
+
+		}
+
+		
+		
+	}
+	
+	public void ApplyValueThredhold(DoubleMatrix2D socialMatrix,BasicOperation Operation,double Value)
+	{
+		
 		String resource1="";
 		String resource2="";
 		Double indicator;
 		
-		for(int k=0;k<WorkingTogetherMatrix.columns();k++)
+		for(int k=0;k<socialMatrix.columns();k++)
 		{
-			for(int j=0;j<WorkingTogetherMatrix.rows();j++)
+			for(int j=0;j<socialMatrix.rows();j++)
 			{
-				if(k!=j && WorkingTogetherMatrix.get(k,j)>=Value && WorkingTogetherMatrix.get(j,k)>=Value)
+				if(k!=j && socialMatrix.get(k,j)>=Value && socialMatrix.get(j,k)>=Value)
 				{
-					   resource1=WorkingTogetherData.getOriginatorList().get(k);
-					   resource2=WorkingTogetherData.getOriginatorList().get(j);
-	                   indicator= Math.rint(WorkingTogetherMatrix.get(k, j)*10)/10;
+					   resource1=Operation.getOriginatorList().get(k);
+					   resource2=Operation.getOriginatorList().get(j);
+	                   indicator= Math.rint(socialMatrix.get(k, j)*10)/10;
 					  
 	                   SocialRelation SR= new SocialRelation(resource1,resource2,indicator);
 
@@ -300,14 +396,12 @@ public class ImproveDiscoverySocialTransformation {
 				}
 				else
 				{
-						WorkingTogetherMatrix.set(k, j, 0);
-						WorkingTogetherMatrix.set(j, k, 0);
+					socialMatrix.set(k, j, 0);
+					socialMatrix.set(j, k, 0);
 				}
 			}
 		}
-		SetWorkingTogetherToShow();
 	}
-	
 	public String TranslateNode(Integer j)
 	{
 		return this.WorkingTogetherData.getOriginatorList().get(j);
@@ -319,25 +413,26 @@ public class ImproveDiscoverySocialTransformation {
 		//	System.out.print("\n"+this.WorkingTogetherData.getOriginatorList().get(j));
 	}
 	
-	public void CleanMatrixToShow()
+	public void CleanMatrixToShow(DoubleMatrix2D matrix)
 	{
 		
-		for(int k=0;k<WorkingTogetherMatrixToShow.columns();k++)
+		for(int k=0;k<matrix.columns();k++)
 		{
-			for(int j=0;j<WorkingTogetherMatrixToShow.rows();j++)
+			for(int j=0;j<matrix.rows();j++)
 			{
-				if(k!=j && WorkingTogetherMatrixToShow.get(k,j)>=cuteValue && WorkingTogetherMatrixToShow.get(j,k)>=cuteValue)
+				if(k!=j && matrix.get(k,j)>=cuteValue && matrix.get(j,k)>=cuteValue)
 				{}
 				else
 				{
-						WorkingTogetherMatrixToShow.set(j, k, 0);
-						WorkingTogetherMatrixToShow.set(k, j, 0);
+					matrix.set(j, k, 0);
+					matrix.set(k, j, 0);
 				}
 			}
 		}
 		
 	}
 		
+	
 }
 
 

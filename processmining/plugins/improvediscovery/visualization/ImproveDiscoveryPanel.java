@@ -15,11 +15,13 @@ import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.processmining.framework.plugin.PluginContext;
+import org.processmining.framework.plugin.Progress;
 import org.processmining.models.heuristics.elements.Activity;
 import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.ProMJGraphVisualizer;
@@ -29,7 +31,6 @@ import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improved
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryData;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoverySocialTransformation;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
-import org.processmining.plugins.socialnetwork.miner.miningoperation.BasicOperation;
 import org.processmining.plugins.socialnetwork.miner.miningoperation.UtilOperation;
 
 import com.fluxicon.slickerbox.components.SlickerButton;
@@ -42,7 +43,8 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	 */
 	private static final long serialVersionUID = 1L;
 	private ImproveDiscoveryData DiscoveryData;
-	private  ImproveDiscoveryModelPanel ModelPanel;
+	private  ProMJGraphPanel ModelPanel;
+	//private ImproveDiscoveryModelPanel ModelPanel;
 	private ImproveDiscoveryParametersPanel ParametersPanel;
 	private PluginContext context;
 	private ProMJGraphPanel comparator_panel;
@@ -58,9 +60,10 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	private int HeuristicViewHeigth=350;
 	private int HeuristicViewDistance=250;
 	
-	private int SocialViewWidth=950;
+	private int SocialViewWidth=450;
 	private int SocialViewHeigth=570;
-	private int SocialViewDistance=250;
+	private int SocialViewDistance=470;
+	private String currentSocialAnalysist="Working Together";
 	
 	public ImproveDiscoveryPanel(final ProMJGraph jgraph,
 			final ImproveDiscoveryTransformation Transformation,final PluginContext context) {
@@ -71,9 +74,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		 this.Transformation=Transformation;
 		 this.context=context;
 		 this.DiscoveryData=Transformation.GetData();
-		 this.SNPanel=new  CustomSocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());
-		// this.WorkingSNPanel=new  CustomSocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());
-		 
+		 this.SNPanel=new  CustomSocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());	 
 		 this.SNPanel.setSize(new Dimension(450,570));
 		 this.SNPanel.setBounds(20, 20, 450,570);
 		 this.SNPanel.setBorder(BorderFactory.createLineBorder(Color.black));
@@ -81,14 +82,29 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	     
 	
 	     		 
-	           
-	     
-	     ModelPanel= new ImproveDiscoveryModelPanel(jgraph,this.DiscoveryData.getHeuristicNet(),this.DiscoveryData.getHMinerAVSettings()); 
+	         
+		 ModelPanel=ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(DiscoveryData.getHeuristicsNetGraph());
+		 ModelPanel.remove(ModelPanel.getComponent(1));
+		 ModelPanel.remove(ModelPanel.getComponent(1));
+		 ModelPanel.remove(ModelPanel.getComponent(3));
+		 ModelPanel.remove(ModelPanel.getComponent(3));
+		
+
+		 
+		 ModelPanel.getComponent(0).repaint();
+		 ModelPanel.repaint();
+		 ModelPanel.setAutoscrolls(false);
+		 ModelPanel.setBounds(0,0,this.HeuristicViewWidth ,this.HeuristicViewHeigth-50);
+		 ModelPanel.setSize(new Dimension(this.HeuristicViewWidth ,this.HeuristicViewHeigth-50));
+		 ModelPanel.setPreferredSize(new Dimension(this.HeuristicViewWidth ,this.HeuristicViewHeigth-50));
+				    
+	    // ModelPanel= new ImproveDiscoveryModelPanel(jgraph,this.DiscoveryData.getHeuristicNet(),this.DiscoveryData.getHMinerAVSettings()); 
 	     ParametersPanel= new ImproveDiscoveryParametersPanel(Transformation,
 	    		 											  this.AddSocialTabEvents(),
 	    		 											  this.AddClusterTabEvent(),
 	    		 											  this.AddPerformanceTabEvent());   
          AddSocialCheckEvents();
+         basicSocialEvents();
 	     this.add(ModelPanel);
 
 	    // this.add(ResetButton());
@@ -104,6 +120,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
          ButtonPanel.add(ResetButton());
          ButtonPanel.add(FullScreen());
          this.add(ButtonPanel);
+         Transformation.SetXLogBackUpUnit();
          
    }
 	
@@ -185,22 +202,23 @@ public class ImproveDiscoveryPanel extends JComponent  {
 
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO Auto-generated method stub
-				Transformation.GetData().ResetToOriginalLog();
-
+				Transformation.ResetLog();
+                   
 				//Performance update
 				   Transformation.GetData().InicializatePerformanceData();
+				   Transformation.SetSocialTransformation(new ImproveDiscoverySocialTransformation(Transformation.GetData()));
+				   
 				   ParametersPanel.mainPerformanceContainer.ResetPanel();
 				   ParametersPanel.mainPerformanceContainer.repaint();
 				   ParametersPanel.repaint();
-				   System.out.print("\n nombre"+ParametersPanel.tabPane.getSelected().getName());
-				   System.out.print("\n nombre"+ParametersPanel.tabPane.getSelected());
-
+				
 				   ParametersPanel.tabPane.selectTab("Organizational");
 				   ParametersPanel.tabPane.selectTab("Performance");
 				   
                    AddPerformanceClickAction();
                //Remove comparative view
                    RemoveComparativeView();
+                   BuiltGraph();
 			}});
 
 		
@@ -221,21 +239,17 @@ public class ImproveDiscoveryPanel extends JComponent  {
 
     		ActionListener Action= new     		ActionListener(){
 
-			public void actionPerformed(ActionEvent arg0) {
-			
+			public void actionPerformed(ActionEvent arg0) {		
 				
-				   UpdateBaseLog();
-				   
-					  
+				   UpdateBaseLog();					  
 				    Transformation.SetSocialTransformation(
 				    		new ImproveDiscoverySocialTransformation(Transformation.GetData()));
 					Transformation.GetSocialTransformation().WTCalculation();				 
-
-				   
 				   ParametersPanel.mainSocialParameters.ResetPanel();
 				   ParametersPanel.mainSocialParameters.repaint();
 				   ParametersPanel.tabPane.repaint();
                    AddSocialCheckEvents();
+                   Transformation.SetXLogBackUpUnit();
 
 			}
     		};
@@ -270,11 +284,15 @@ public class ImproveDiscoveryPanel extends JComponent  {
 			public void actionPerformed(ActionEvent arg0) {
 				   
 				  
- 
+				   Progress progress = context.getProgress();
 				   UpdateBaseLog();
 				   Transformation.GetClusterTransformation().SetClusterData(
 				   new ImproveDiscoveryClusterData(Transformation.GetData().GetCurrentLog(), 1));
-				   
+					String message = "Obtain Log Event Class mapping and replay settings";
+					progress.setCaption(message);
+					progress.setIndeterminate(false);
+					progress.setMinimum(0);
+					progress.setMaximum(Transformation.GetData().GetCurrentLog().size() + 2000);
 
 				   Transformation.GetClusterTransformation().MakeProcessAlign();
 				   ParametersPanel.mainClusterParameters.ResetPanel();
@@ -353,7 +371,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	
 	public void AddHeuristic()
 	{
-			
+		this.Transformation.GenerateHeuristicModel();
 		if(this.comparator_panel!=null)
 		this.add(comparator_panel);
 
@@ -372,7 +390,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		}
 		else if (this.LargeView && this.WorkingSNPanel==null)
 		{
-			SocialPanelData("Working Together");
+			SocialPanelData(this.currentSocialAnalysist);
 			this.WorkingSNPanel=new  CustomSocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());
 			this.WorkingSNPanel.setSize(new Dimension(SocialViewWidth,SocialViewHeigth));
 			this.WorkingSNPanel.setBounds(SocialViewDistance, 20, SocialViewWidth,SocialViewHeigth);
@@ -381,6 +399,10 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		}
 		if(this.WorkingSNPanel!=null)
 		{
+			if(!this.LargeView)
+			{
+				WorkingSNPanel.setSize(new Dimension(SocialViewWidth,SocialViewHeigth));
+			}
 		    this.add(this.WorkingSNPanel);
 		}
 		//this.add(WorkingSNPanel);
@@ -663,6 +685,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 					if(check.isSelected() && ParametersPanel.mainSocialParameters.RelationsPanel.getComponentCount()==0)
 					{// se selecciono para borrarlo
 						redrawGraphWithSocialGroupSelection(true,check.getName());
+					
 					}
 					else if(check.isSelected() && ParametersPanel.mainSocialParameters.RelationsPanel.getComponentCount()>0)
 					{
@@ -670,7 +693,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 					}
 					else
 					{	
-						redrawGraphWithSocialGroupSelection(true,check.getName());
+						redrawGraphWithSocialGroupSelection(false,check.getName());
 					}
 				}
 //aqui
@@ -874,10 +897,41 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		
 
 	}
-	  
+	
+	public void basicSocialEvents()
+	{
+		ParametersPanel.mainSocialParameters.Options.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				
+				JComboBox combo= ParametersPanel.mainSocialParameters.Options;
+				  Transformation.SetSocialTransformation(
+						    new ImproveDiscoverySocialTransformation(Transformation.GetData()));
+				if(combo.getSelectedItem().toString().equals("Similar Task"))
+				{
+					currentSocialAnalysist="Similar Task";
+					Transformation.GetSocialTransformation().STCalculation();			 
+				}
+				else if(combo.getSelectedItem().toString().equals("Working Together"))
+				{
+					currentSocialAnalysist="Working Together";
+					Transformation.GetSocialTransformation().WTCalculation();				 						  
+				}
+	
+			       ParametersPanel.mainSocialParameters.ResetPanel();
+				   ParametersPanel.mainSocialParameters.repaint();
+				   ParametersPanel.tabPane.selectTab("Performance");
+				   ParametersPanel.tabPane.selectTab("Organizational");
+
+				   AddSocialCheckEvents();
+				   BuiltGraph();
+			}});
+	}
 	public void AddCheckBoxesEvent()
     {
-   
+	
+		
+		
+		//Options
     	for(int u=0;u<ParametersPanel.mainSocialParameters.edgesConcurrencyActiveBox.length;u++)
     	{
     		
@@ -946,6 +1000,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 		}
 		BuiltGraph();
     }
+    
     public void redrawGraphWithClusters(String number,boolean remove)
 	{
 		Transformation.setContext(context);
@@ -993,7 +1048,6 @@ public class ImproveDiscoveryPanel extends JComponent  {
 								comparator_panel.setBounds(0, this.HeuristicViewDistance,this.HeuristicViewWidth ,this.HeuristicViewHeigth);
 								comparator_panel.setSize(new Dimension(this.HeuristicViewWidth ,this.HeuristicViewHeigth));
 								comparator_panel.setPreferredSize(new Dimension(this.HeuristicViewWidth ,this.HeuristicViewHeigth));
-								comparator_panel.setBackground(Color.orange);
 							    
 								this.add(comparator_panel);
 								this.revalidate();	
@@ -1025,8 +1079,7 @@ public class ImproveDiscoveryPanel extends JComponent  {
 			this.repaint();
 			this.revalidate();
 			
-			System.out.print("resource");
-			//this.Transformation.GetCurrentResourceList();
+			System.out.print("\n resource");
 
 		}
 	}
@@ -1074,17 +1127,20 @@ public class ImproveDiscoveryPanel extends JComponent  {
 	
 	public void SocialPanelData(String type)
 	{
-		BasicOperation baseOprtation = null;
 		if(type.equals("Working Together"))
 		{
-	  	 
 				DiscoveryData.SetSocialNetwork(UtilOperation.generateSN(
-						Transformation.GetSocialTransformation().GetWorkingTogetherMatrix2DToShow(), 
+						Transformation.GetSocialTransformation().GetMatrix2DToShow("WT"), 
 						Transformation.GetSocialTransformation().GetWorkingTogetherDataToShow().getOriginatorList()));
 					
 		}
 		else if(type.equals("Similar Task"))
 		{
+
+			DiscoveryData.SetSocialNetwork(UtilOperation.generateSN(
+					Transformation.GetSocialTransformation().GetMatrix2DToShow("ST"), 
+					Transformation.GetSocialTransformation().GetSimilarTaskDataToShow().getOriginatorList()));
+	
 		
 		}
 		 

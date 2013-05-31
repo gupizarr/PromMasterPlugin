@@ -9,6 +9,7 @@ import org.deckfour.xes.info.XLogInfo;
 import org.deckfour.xes.info.XLogInfoFactory;
 import org.deckfour.xes.model.XAttributeMap;
 import org.deckfour.xes.model.XEvent;
+import org.deckfour.xes.model.XLog;
 import org.deckfour.xes.model.XTrace;
 import org.deckfour.xes.model.impl.XAttributeMapImpl;
 import org.deckfour.xes.model.impl.XAttributeMapLazyImpl;
@@ -34,6 +35,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
     private boolean fixLog=false;
     private ArrayList<String> RemovedResources;  
     private int currentCluster=-1;
+    private XLog SocialBackUpUnit;
 
 	public ImproveDiscoveryTransformation(ImproveDiscoveryData Data, final PluginContext context)  {
 		// TODO Auto-generated constructor stub
@@ -49,7 +51,10 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	   
 	}
 	
-	
+	public void SetXLogBackUpUnit()
+	{
+		SocialBackUpUnit= (XLog) this.Data.GetBaseLog().clone();
+	}
 	public ImproveDiscoverySocialTransformation GetSocialTransformation()
 	{
 	return 	SocialTransformation;
@@ -75,23 +80,28 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 		this.ClusterTransformation=ClusterTransformation;
 	}
 	
-	public void PerformanceFilter(int minTimeValue, int maxTimeValue)
+	public void PerformanceFilter(double minTimeValue, double maxTimeValue)
 	{
 		 ArrayList<XTrace> KeptXTrace= new ArrayList<XTrace>();
-     	
-		 for(int i=0; i<Data.GetBaseLog().size(); i++)
-	     {
-	    	   
-			    if(Data.GetPerformanceData().getFinalTimes()[i]>=minTimeValue && Data.GetPerformanceData().getFinalTimes()[i]<=maxTimeValue)
-			    {    		 
-	       		 KeptXTrace.add(Data.GetBaseLog().get(i));
-			    }
-	    	 
-	     }
+ 	    
+		 
+		 System.out.print("\n min:"+minTimeValue);
+		 System.out.print("\n max:"+maxTimeValue);
+
+			 for(int i=0; i<Data.GetBaseLog().size(); i++)
+		     {
+				    if((Data.GetPerformanceData().getFinalTimes()[i])>=minTimeValue && (Data.GetPerformanceData().getFinalTimes()[i])<=maxTimeValue)
+				    {    		 
+		       		 KeptXTrace.add(Data.GetBaseLog().get(i));
+				    }
+		    	 
+		     }
+		 
+
 		 Data.SetCurrentLog( new XLogImpl(new XAttributeMapLazyImpl<XAttributeMapImpl>(XAttributeMapImpl.class)));
 	     Data.GetCurrentLog().addAll(KeptXTrace);
 	     Data.ResetPerformanceData();
-         UpdateGraph(true);
+         UpdateGraphWithPerformanceChanges();
 
 	}
 	
@@ -233,10 +243,8 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	
 		 Traces = new ArrayList<XTrace>();
 		 boolean removeTrace=false;
-    
-               
-      	 
-		
+             
+      	 		
 		      for (int u=0; u<this.Data.GetCurrentLog().size(); u++)
 			  {
 		 	       XTrace trace = this.Data.GetCurrentLog().get(u);   
@@ -347,22 +355,77 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 		  
 	  }
 	
-	  public void UpdateGraph(boolean isPerformance)
+	  public void ResetLog()
 	  {
-		  if(!isPerformance)
-		  {
-			  this.Data.SetCurrentLog(new XLogImpl(new XAttributeMapLazyImpl<XAttributeMapImpl>(XAttributeMapImpl.class)));
-			  this.Data.GetCurrentLog().addAll(Traces);
-			  System.out.print("\n Log size after:"+ this.GetData().GetCurrentLog().size());
-	
+		  RemovedClusters.clear();
+	      RemovedParticularCases.clear();
+		  RemovedResources.clear();
+		  Data.ResetToOriginalLog();
+		  GenerateHeuristicModel();
+	  }
+	  public void UpdateGraphWithPerformanceChanges()
+	  {
 		
+		  	  if(Data.GetCurrentLog().size()==0)
+		  	  {	
+			  System.out.print("\n refill");
+
+			  XTrace trace= new XTraceImpl(new XAttributeMapImpl());
+			  XEvent event= new XEventImpl();
+			  trace.add(event);
+			  Data.GetCurrentLog().add(trace);
+		  	  }
+		  	  else if(!Data.GetCurrentLog().isEmpty() && Data.GetCurrentLog().get(0).size()==1)
+			  {
+				  System.out.print("\n fixlog");
+			  FixLog();
+			  }
+			  
+			  System.out.print("\n current size: "+Data.GetCurrentLog().size());
+			  XLogInfo Info=XLogInfoFactory.createLogInfo(this.Data.GetCurrentLog());
+			  HeuristicsMiner fhm = new HeuristicsMiner(context, Data.GetCurrentLog(),Info ); 
+			  this.Data.setHeuristicNet(fhm.mine()); 
+		      this.Data.GetHNetSettings().setShowingUnconnectedTasks(true);
+			  AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
+			  this.Data.setAnnotatedVisualizationSettings(new AnnotatedVisualizationSettings());
+			  this.Data.setHeuristicsNetGraph(generator.generate(this.Data.getHeuristicNet(),this.Data.GetHNetSettings()));
+		  	
+	  }
+	  public void ShowLog()
+	  {
+		      int num=0;
+              for (int u=0; u<this.Data.GetCurrentLog().size(); u++)
+			  {	        	  
+	        	    // XTrace trace = (XTrace)this.Data.GetBaseLog().get(u).clone(); 	
+	        	    XTrace trace = this.Data.GetCurrentLog().get(u); 	
+	        	    
+	        			
+			      				
+			        	            num+= trace.size();
+			        	            
+			      			
+	        	    
+			  }
+              System.out.print("\n number of events: "+num);
+	  }
+	  public void UpdateGraphWithSocialChanges()
+	  {
+		
+		      
+		   
+
+			 ShowLog();
+			 
 			  if(!Data.GetCurrentLog().isEmpty() && Data.GetCurrentLog().get(0).size()==1)
 			  {
+			  System.out.print("\n fixed");
 			  FixLog();
 			  }
 			  
 			  if(Data.GetCurrentLog().size()==0)
 			  {	
+				  System.out.print("\n refill");
+
 				  XTrace trace= new XTraceImpl(new XAttributeMapImpl());
 				  XEvent event= new XEventImpl();
 				  trace.add(event);
@@ -371,16 +434,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 		  
 			  if(Data.GetCurrentLog().size()>0)
 			  {
-			  XLogInfo Info=XLogInfoFactory.createLogInfo(this.Data.GetCurrentLog());
-			  System.out.print("\n Number of events: "+Info.getNumberOfEvents());
-			  HeuristicsMiner fhm = new HeuristicsMiner(context, Data.GetCurrentLog(),Info ); 
-			  this.Data.setHeuristicNet(fhm.mine()); 
-	
-		      this.Data.GetHNetSettings().setShowingUnconnectedTasks(true);
-			  AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
-			  this.Data.SetHNetSettings(new AnnotatedVisualizationSettings());
-			  this.Data.setHeuristicsNetGraph(generator.generate(this.Data.getHeuristicNet(),this.Data.GetHNetSettings()));
-			  		  
+				  GenerateHeuristicModel();	  
 			  }
 			  else
 			  {
@@ -390,31 +444,51 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 		         act.add(activities.next());
 		      }
 
-			  	this.Data.getHeuristicsNetGraph().getActivities().removeAll(act);
+			  	//this.Data.getHeuristicsNetGraph().getActivities().removeAll(act);
 			  }
 			  
 			  //update socialview
 			  this.SocialTransformation.SetWorkingTogetherToShow();
-			  
+
+		  }
+		 
+			
+	  
+	  
+	  
+	  public void GenerateHeuristicModel()
+	  {
+		  
+		  XLogInfo Info=XLogInfoFactory.createLogInfo(this.Data.GetCurrentLog());
+		  HeuristicsMiner fhm = new HeuristicsMiner(context, Data.GetCurrentLog(),Info ); 
+		  this.Data.setHeuristicNet(fhm.mine()); 
+	      this.Data.GetHNetSettings().setShowingUnconnectedTasks(true);
+		  AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
+		  this.Data.setAnnotatedVisualizationSettings(new AnnotatedVisualizationSettings());
+		  this.Data.setHeuristicsNetGraph(generator.generate(this.Data.getHeuristicNet(),this.Data.GetHNetSettings()));
+	  
+	  }
+	  
+	  public void GenerateHeuristicModel(boolean remove)
+	  {
+		  XLogInfo Info;
+		  HeuristicsMiner fhm;
+		  if(!remove)
+		  {
+		   Info=XLogInfoFactory.createLogInfo(this.Data.GetCurrentLog());
+		   fhm = new HeuristicsMiner(context, Data.GetCurrentLog(),Info ); 
 		  }
 		  else
 		  {
-			  if(!Data.GetCurrentLog().isEmpty() && Data.GetCurrentLog().get(0).size()==1)
-			  {
-			  FixLog();
-			  }
-			  
-			  XLogInfo Info=XLogInfoFactory.createLogInfo(this.Data.GetCurrentLog());
-			  System.out.print("\n trace size:"+this.Data.GetCurrentLog().size());
-			  HeuristicsMiner fhm = new HeuristicsMiner(context, Data.GetCurrentLog(),Info ); 
-			  this.Data.setHeuristicNet(fhm.mine()); 
-
-		      this.Data.GetHNetSettings().setShowingUnconnectedTasks(true);
-			  AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
-			  this.Data.setAnnotatedVisualizationSettings(new AnnotatedVisualizationSettings());
-			  this.Data.setHeuristicsNetGraph(generator.generate(this.Data.getHeuristicNet(),this.Data.GetHNetSettings()));
+			  //carga el log con exactamente los cambios que debe restructurar
+			  Info=XLogInfoFactory.createLogInfo(this.Data.GetCurrentLog());
+			  fhm = new HeuristicsMiner(context, Data.GetCurrentLog(),Info ); 			  
 		  }
-			
+		  this.Data.setHeuristicNet(fhm.mine()); 
+	      this.Data.GetHNetSettings().setShowingUnconnectedTasks(true);
+		  AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
+		  this.Data.setAnnotatedVisualizationSettings(new AnnotatedVisualizationSettings());
+		  this.Data.setHeuristicsNetGraph(generator.generate(this.Data.getHeuristicNet(),this.Data.GetHNetSettings()));
 	  }
 	  
 	  public void FixLog()
@@ -457,75 +531,59 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 		    {
 			RemovedResources.add(Rols);
 		    }
-		    SocialFilterAll();
+		 
+		    SocialFilterRemove();
 	  }
 	  
-	  public void SocialFilterAll()
-	  {
-			int count=0;
-	        XEvent[] remove;
-	        XTrace[] removeTrace= new XTrace[this.Data.GetBaseLog().size()];
-	        String resource;
 	
-	        int remove_trace_count=0;
+	  public void RestoreBaseXLog()
+	  {
+		System.out.print("\n backup log size:"+ this.SocialBackUpUnit.size());
+		this.Data.setBaseLog(this.SocialBackUpUnit);  
+	  }
+	  
+	  public void SocialFilterRemove()
+	  {
+		    
+	        String resource;
+	        ShowLog();
 			System.out.print("\n Log size before:"+ this.GetData().GetBaseLog().size());
+            Traces.clear();
 
 			//por cada persona
-	    	for(int j=0;j<RemovedResources.size();j++)
-	 		{//abro el log
+	       System.out.print("\n personas a remover:"+RemovedResources);
 	          for (int u=0; u<this.Data.GetBaseLog().size(); u++)
 			  {	        	  
-	        	  XTrace trace = this.Data.GetBaseLog().get(u); 	
-	        	    count=0;
-	        	    remove= new XEvent[trace.size()];
-	           	    //si es que tiene eventos
-	        	    if(trace.size()>0)
+
+	        	    XTrace trace= new XTraceImpl(new XAttributeMapLazyImpl<XAttributeMapImpl>(XAttributeMapImpl.class));
+	        	    Traces.add(trace);
+	        	    //si es que tiene eventos
+	        	    if(this.Data.GetBaseLog().get(u).size()>0)
 	        	    {
 	        	    	//por cada evento
-							for (XEvent event : trace) 
+				 			for (XEvent event : this.Data.GetBaseLog().get(u)) 
 							{		
 			        	            resource=XLogInfoFactory.createLogInfo(this.Data.GetBaseLog()).getResourceClasses().getClassOf(event).getId();
 					     		    //si el evento es ejecutado por la persona que se quiere remover
-			        	            if(resource.equals(RemovedResources.get(j)))
+			        	            if(!RemovedResources.contains(resource))
 					     			{
-					     				     		remove[count]=event;
-					     				     		count++;	     				          
-					     			}  		
+			        	            	trace.add(event);	     				          
+					     			}  			        	     
 							}
-							
-							for(int g=0;g<count;g++)
-							{
-								//retiro el evento del trace
-								trace.remove(remove[g]);
-								//si trace no tiene  eventos lo agro a los que retiro del log
-								if(trace.size()==0)
-								{
-									removeTrace[remove_trace_count]=trace;
-									remove_trace_count++;
-								}
-							}
-						count=0;
-	        	    }
-			  }  
-	 		}
-	    	     	
-	    	//Luego para el log
-	    	 for(int s=0; s<Data.GetBaseLog().size();s++)
-	         {
-	       	  	boolean existe=false;
-	       	  	for(int c=0; c<removeTrace.length;c++)
-	       	  	{
-	       	  		//busco si existe actualemnte en el log
-	       	  		if(removeTrace[c]==Data.GetBaseLog().get(s))
-	       	  		existe=true;
-	       	  	}
-	    	  	//si no existe  lo borro
-	       	  	if(!existe)
-	       	  		Traces.add(Data.GetBaseLog().get(s));
-	         }
-
+			   	    }
+	        	    if(trace.size()==0)
+	        	    	Traces.remove(trace);
+			  } 
 	 		
-	          UpdateGraph(false);
+	         
+		      System.out.print("\n se mantienen: "+Traces.size());
+
+		      this.Data.SetCurrentLog(new XLogImpl(new XAttributeMapLazyImpl<XAttributeMapImpl>(XAttributeMapImpl.class)));
+			  this.Data.GetCurrentLog().addAll(Traces);
+			  System.out.print("\n Log size after:"+ this.GetData().GetCurrentLog().size());
+			//		  RestoreBaseXLog();
+	  
+	         UpdateGraphWithSocialChanges();
 	  }
 	  
 	  
@@ -564,8 +622,9 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	  public void AddSocialResource(String resource)
 	  {
 	     //Data.SetCurrentLog((XLog) Data.GetOriginalWorkingLog().clone());
-	     RemovedResources.remove(resource);
-		 SocialFilter("");
+	     String person= this.SocialTransformation.TranslateNode(Integer.parseInt(resource));
+	     RemovedResources.remove(person);
+	     SocialFilterRemove();
 	  }
 	  
 	  public void setContext(PluginContext context)
@@ -577,6 +636,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	  {
 			ArrayList<Integer> Team;
 			
+		  System.out.print("\n Group Filter");
 		  if(GroupName.equals("-1"))
     		 Team=this.SocialTransformation.GetGroupsOneTwo();
 		  else
@@ -591,8 +651,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 				}			    
 			
 			 }
-			  Traces.clear();
-			  SocialFilterAll();
+			  SocialFilterRemove();
 
 	  }
 	  
@@ -609,10 +668,15 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			 for(int j=0; j<Team.size();j++)
 			 {
 				String person= this.SocialTransformation.TranslateNode(Team.get(j));
-				RemovedResources.remove(person);	
-			
+				if(RemovedResources.contains(person))
+				{
+					RemovedResources.remove(person);	
+				}	
+				
 			 }
-		
+			 
+			  Traces.clear();
+			  SocialFilterRemove();
 	  }
 	  
 	  public void GetCurrentResourceList()

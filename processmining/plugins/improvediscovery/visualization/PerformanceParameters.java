@@ -49,6 +49,8 @@ public class PerformanceParameters extends JPanel {
 	protected 		JPanel performanceHeaderPanel;
 	protected JPanel performanceParametersContainer;
 	protected JPanel downSettingsPanel;
+	protected boolean multiTime;
+	protected JLabel maxSliderHeader;
 	public PerformanceParameters(ImproveDiscoveryTransformation DataTransformation) {
 		// TODO Auto-generated constructor stub
 		this.DataTransformation= DataTransformation;
@@ -59,13 +61,62 @@ public class PerformanceParameters extends JPanel {
 		this.setBackground(COLOR_BG2);
 		this.setOpaque(true);
 		this.setLayout(new BorderLayout());
+		multiTime=CompositionTime();
 		BuiltParameters();
 	}
 	
+	public void JLabelProperties()
+	{
+		minSliderHeader.setFont(this.smallFont);
+		minSliderHeader.setOpaque(false);
+		minSliderHeader.setForeground(COLOR_FG);
+		centerHorizontally(minSliderHeader);
+
+		centerHorizontally(minTimeLabel);
+		minTimeLabel.setSize(new Dimension(100, 25));
+		minTimeLabel.setForeground(COLOR_FG);
+		minTimeLabel.setFont(this.smallFont);
+		
+		maxSliderHeader.setSize(new Dimension(150, 25));
+		maxSliderHeader.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+		maxSliderHeader.setOpaque(false);
+		maxSliderHeader.setForeground(COLOR_FG);
+		maxSliderHeader.setFont(this.smallFont);
+		centerHorizontally(maxSliderHeader);				
+
+
+		maxTimeLabel.setForeground(COLOR_FG);
+		maxTimeLabel.setSize(new Dimension(100, 25));
+		maxTimeLabel.setFont(this.smallFont);					
+		centerHorizontally(maxTimeLabel);	
+	}
+	
+	
+	public int ReturnMaxValue()
+	{
+    	if(multiTime)
+    		return (int)(Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1]*Data.GetPerformanceData().ponderator);
+    	else	
+    	    return (int)Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1];
+		
+    	
+		
+	}
+	
+	public int ReturnMinValue()
+	{
+	
+    	if(multiTime)
+    		return (int)(Data.GetPerformanceDiff()[0]*Data.GetPerformanceData().ponderator);
+    	else	
+    	    return (int)Data.GetPerformanceDiff()[0];
+		 
+    	
+	}
+	
+	
 	public void BuiltParameters()
 	{
-		
-		
 		// lower header panel (radio buttons etc.)
 		performanceHeaderPanel = new JPanel();
 		performanceHeaderPanel.setOpaque(false);
@@ -79,93 +130,107 @@ public class PerformanceParameters extends JPanel {
 		// lower ratio slider panel
 		JPanel parametersPerformancePanelLabel = new JPanel();
 		parametersPerformancePanelLabel.setOpaque(false);
-		parametersPerformancePanelLabel.setLayout(new BorderLayout());		
-
-		// lower percentage slider panel				
-		minSliderHeader = new JLabel("<html>Min Time <br>"+""+ (int) Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1]+" "+Data.GetPerformanceData().TagTime());
-		minSliderHeader.setFont(this.smallFont);
-		minSliderHeader.setOpaque(false);
-		minSliderHeader.setForeground(COLOR_FG);
-		centerHorizontally(minSliderHeader);
+		parametersPerformancePanelLabel.setLayout(new BorderLayout());	
 		
-		minTimeSlider = new JSlider(JSlider.VERTICAL,(int) Data.GetPerformanceDiff()[0] , 
-				                                     (int) Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1], 
-				                                     (int) Data.GetPerformanceDiff()[0]);
+		
+		//Slider Labels
+		minSliderHeader = new JLabel(JLabelName("<html>Min Time <br>",Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1]));	
+		maxTimeLabel = new JLabel(JLabelName("",Data.GetPerformanceDiff()[0]));
+		minTimeLabel = new JLabel(	JLabelName("",Data.GetPerformanceDiff()[0]));
+		maxSliderHeader = new JLabel(JLabelName("<html>Max Time <br>",Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1]));
+	
+		//Label Properties
+		 JLabelProperties();
+		
+		 //Sliders
+		// lower percentage slider panel						
+	
+		 
+		 
+		minTimeSlider = new JSlider(JSlider.VERTICAL,ReturnMinValue() , ReturnMaxValue(), ReturnMinValue());
 		minTimeSlider.setUI(new SlickerSliderUI(minTimeSlider));
 		minTimeSlider.setOpaque(false);
 		minTimeSlider.addMouseListener(new MouseListener(){
-
+          
+			boolean pressed=false;
+			public void mousePressed(MouseEvent arg0) {
+				
+				if(!pressed)
+				{
+				System.out.print("\n mouse pressed");
+				maxTimeSlider.setMinimum(minTimeSlider.getValue());
+				
+				if(multiTime)
+				{
+					maxTimeLabel.setText(JLabelName("",NormaliseTime(minTimeSlider.getValue())));
+				    DataTransformation.PerformanceFilter(NormaliseTime(minTimeSlider.getValue()), maxTimeSlider.getValue());
+				}
+				else
+				{
+					DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
+					maxTimeLabel.setText(JLabelName("",minTimeSlider.getValue()));
+					
+				}
+				}
+				pressed=false;
+			}
 			public void mouseClicked(MouseEvent arg0) {
 				// TODO Auto-generated method stub
+				
+				System.out.print("\n mouse click");			
+					maxTimeSlider.setMinimum(minTimeSlider.getValue());
+					if(multiTime)
+					{
+						maxTimeLabel.setText(JLabelName("",NormaliseTime(minTimeSlider.getValue())));
+						DataTransformation.PerformanceFilter(NormaliseTime(minTimeSlider.getValue()), maxTimeSlider.getValue());
+					}
+					else
+					{
+						maxTimeLabel.setText(JLabelName("",minTimeSlider.getValue()));
+						DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
+
+					}
 			
-			
+	
 
 			}
-
-			public void mouseEntered(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			public void mouseExited(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			public void mousePressed(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				maxTimeSlider.setMinimum(minTimeSlider.getValue());
-				maxTimeLabel.setText(""+minTimeSlider.getValue()+" "+Data.GetPerformanceData().TagTime());
-				DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
-		
-			}
-
-			public void mouseReleased(MouseEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-         
+			public void mouseEntered(MouseEvent arg0) {	}
+			public void mouseExited(MouseEvent arg0) {}
+			public void mouseReleased(MouseEvent arg0) {}
          });
          
 		minTimeSlider.setToolTipText("<html>Select the minimum time of the traces for filtering<br>"
 				+ "lower value prefers correlation.</html>");
-
 		
-		minTimeLabel = new JLabel(""+  (int) Data.GetPerformanceDiff()[0]+" "+Data.GetPerformanceData().TagTime());
-		centerHorizontally(minTimeLabel);
-		minTimeLabel.setSize(new Dimension(100, 25));
-		minTimeLabel.setForeground(COLOR_FG);
-		minTimeLabel.setFont(this.smallFont);
-		
-		parametersPerformancePanelLabel.add(packVerticallyCentered(minSliderHeader, 100, 40), BorderLayout.NORTH);
+		parametersPerformancePanelLabel.add(packVerticallyCentered(minSliderHeader, 120, 40), BorderLayout.NORTH);
 		parametersPerformancePanelLabel.add(minTimeSlider, BorderLayout.CENTER);
-		parametersPerformancePanelLabel.add(packVerticallyCentered(minTimeLabel, 100, 20), BorderLayout.SOUTH);
+		parametersPerformancePanelLabel.add(packVerticallyCentered(minTimeLabel, 120, 20), BorderLayout.SOUTH);
 		
 		// lower percentage slider panel
 		JPanel parametersPerformancePanel = new JPanel();
 		parametersPerformancePanel.setOpaque(false);
 		parametersPerformancePanel.setLayout(new BorderLayout());
 		
-		
-		JLabel maxSliderHeader = new JLabel("<html>Max Time <br>"+
-		(int) Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1]+" "+
-		Data.GetPerformanceData().TagTime());
-		maxSliderHeader.setSize(new Dimension(150, 25));
-		maxSliderHeader.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-		maxSliderHeader.setOpaque(false);
-		maxSliderHeader.setForeground(COLOR_FG);
-		maxSliderHeader.setFont(this.smallFont);
-		centerHorizontally(maxSliderHeader);
-				
-		maxTimeSlider = new JSlider(JSlider.VERTICAL, (int) Data.GetPerformanceDiff()[0],  (int) Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1], 
-				(int) Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1]);
+		maxTimeSlider = new JSlider(JSlider.VERTICAL, ReturnMinValue(), ReturnMaxValue(), ReturnMaxValue());
 		maxTimeSlider.setUI(new SlickerSliderUI(maxTimeSlider));
 		maxTimeSlider.setOpaque(false);
 		maxTimeSlider.addMouseListener(new MouseListener(){
 
 			public void mouseClicked(MouseEvent arg0) {
 				// TODO Auto-generated method stub
-			
+				minTimeSlider.setMaximum(maxTimeSlider.getValue());
+				if(multiTime)
+				{		
+				DataTransformation.PerformanceFilter(NormaliseTime(minTimeSlider.getValue()),
+													 NormaliseTime(maxTimeSlider.getValue()));
+				minSliderHeader.setText(JLabelName("<html>Min Time <br>", NormaliseTime(maxTimeSlider.getValue())));			
+				
+				}
+				else
+				{
+    			DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
+				minSliderHeader.setText(JLabelName("<html>Min Time <br>",maxTimeSlider.getValue()));			
+			    }
 			}
 
 			public void mouseEntered(MouseEvent arg0) {
@@ -180,9 +245,22 @@ public class PerformanceParameters extends JPanel {
 			public void mousePressed(MouseEvent arg0) {
 				// TODO Auto-generated method stub
 				minTimeSlider.setMaximum(maxTimeSlider.getValue());
-				DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
-				minSliderHeader.setText("<html>Min Time <br>"+""+ (int) maxTimeSlider.getValue() +" "+Data.GetPerformanceData().TagTime());
-	
+				
+				if(multiTime)
+				{
+					DataTransformation.PerformanceFilter(NormaliseTime(minTimeSlider.getValue()),
+							 NormaliseTime(maxTimeSlider.getValue()));
+					minSliderHeader.setText(JLabelName("<html>Min Time <br>",
+							 NormaliseTime(maxTimeSlider.getValue())));
+
+				}
+				else
+				{
+    			DataTransformation.PerformanceFilter(minTimeSlider.getValue(), maxTimeSlider.getValue());
+				minSliderHeader.setText(JLabelName("<html>Min Time <br>",maxTimeSlider.getValue()));
+
+				}
+				
 			}
 
 			public void mouseReleased(MouseEvent arg0) {
@@ -194,15 +272,11 @@ public class PerformanceParameters extends JPanel {
 		maxTimeSlider.setSize(new Dimension(10,100));
 		maxTimeSlider.setToolTipText("<html>" +
 						"Select the minimum time of the traces for filtering.</html>");
-		maxTimeLabel = new JLabel(""+(int) Data.GetPerformanceDiff()[0]+" "+Data.GetPerformanceData().TagTime());
-		maxTimeLabel.setForeground(COLOR_FG);
-		maxTimeLabel.setSize(new Dimension(100, 25));
-		maxTimeLabel.setFont(this.smallFont);
-				
-		centerHorizontally(maxTimeLabel);
-		parametersPerformancePanel.add(packVerticallyCentered(maxSliderHeader, 100, 40), BorderLayout.NORTH);
+		
+		
+		parametersPerformancePanel.add(packVerticallyCentered(maxSliderHeader, 120, 40), BorderLayout.NORTH);
 		parametersPerformancePanel.add(maxTimeSlider, BorderLayout.CENTER);
-		parametersPerformancePanel.add(packVerticallyCentered(maxTimeLabel, 100, 20), BorderLayout.SOUTH);
+		parametersPerformancePanel.add(packVerticallyCentered(maxTimeLabel, 120, 20), BorderLayout.SOUTH);
 				// assemble lower slider panel
 		performanceParametersContainer.add(parametersPerformancePanel);
 		performanceParametersContainer.add(parametersPerformancePanelLabel);
@@ -234,6 +308,121 @@ public class PerformanceParameters extends JPanel {
 		if (evt.getSource() == meanPerformanceCheckBox) {
 			System.out.print("Ver media");
 		}
+	}
+	
+
+	public String JLabelName(String ini, double time)
+	{
+    	String name="";
+    	
+    	if(multiTime)
+    	{
+    		System.out.print("\n multi time es verdadero");
+    		name=	ini+ " "+	editTime(time);
+    	}
+    	else	
+    	{
+    		System.out.print("\n multi time falso");
+
+    		name=   (int) time+" "+Data.GetPerformanceData().TagTime();
+    	}
+    	return name;
+	}
+	
+	public boolean CompositionTime()
+	{
+		//max
+		double min=Data.GetPerformanceDiff()[0];
+		//min
+		double max=Data.GetPerformanceDiff()[Data.GetPerformanceDiff().length-1];
+		
+		double diff= max-min;
+		
+		System.out.print("\n min:"+min);
+		System.out.print("\n max:"+max);
+
+		if(diff>10)
+				return false;
+		else
+			return true;
+	}
+	
+	public double NormaliseTime(double time)
+	{
+		double ponderator=1;
+		System.out.print("\n time value"+time);
+
+		if(multiTime)
+		{
+	     ponderator=DataTransformation.GetData().GetPerformanceData().ponderator;
+		}
+		
+		System.out.print("\n ponderador:"+ponderator);
+		double value= time/ponderator;
+		System.out.print("\n final value"+value);
+
+		return  value;
+	}
+	public String editTime(double time)
+	{    
+		double seconds;
+		double minutes;
+		double hours;
+		
+		String date="";
+		//Days
+		if(time>=2)
+		{
+			date= ""+Math.round(time)+" d";
+			time=time-Math.round(time);
+		}
+		else if(time>=1)
+		{
+			date= ""+Math.round(time)+" d";
+			time=time-Math.round(time);
+
+		}
+		//hours
+		hours=time*24;
+		if(hours>=1 && hours<2)
+		{
+			date+=", "+1+" h";
+			hours=hours-1;
+	
+		}
+		else if(hours>=2)
+		{
+			date+=", "+ Math.round(hours)   +" h";
+			hours=hours-Math.round(hours);
+		}
+		
+		//minutes
+		minutes=hours*60;
+		if(minutes>=1 && minutes<2)
+		{
+			date+=", "+1+" m";
+			minutes=minutes-1;
+		}
+		else if(minutes>2)
+		{
+			date+=", "+ Math.round(minutes)   +" m";
+			minutes=minutes-Math.round(minutes);
+			
+		}	
+		seconds=minutes*60;
+		if(seconds==1)
+		{
+			date+=", "+1+" s";
+			minutes=minutes-1;
+		}
+		else if(seconds>=2)
+		{
+			date+=", "+ Math.round(seconds)   +" s";
+			seconds=seconds-Math.round(seconds);
+					
+		}
+		return date;
+		
 	}
 	
 	protected double getNodeThresholdFromSlider() {
@@ -274,6 +463,8 @@ public class PerformanceParameters extends JPanel {
 		this.remove(downSettingsPanel);
 		BuiltParameters();
 		this.repaint();
+		multiTime=CompositionTime();
+
 	}
 
 }

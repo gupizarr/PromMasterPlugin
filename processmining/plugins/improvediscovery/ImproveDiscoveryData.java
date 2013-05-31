@@ -66,11 +66,13 @@ public class ImproveDiscoveryData {
   
   public void ResetToOriginalLog()
   {
+	  System.out.print(" \n SIZE:"+log.size());
 		transformLog = (XLog) log.clone();
 		workingLog= (XLog) log.clone();
 		
   }
   
+
   public void SetTransformLogFromWorkingLog()
   {
 	  transformLog=(XLog) workingLog.clone();
@@ -121,7 +123,7 @@ public class ImproveDiscoveryData {
   
   public void SetCurrentLog(XLog AuxLog)
   {
-	  this.workingLog=AuxLog;
+	  this.workingLog= (XLog) AuxLog.clone();
   }
   
   public void RemoveTrace(XTrace trace)
@@ -129,6 +131,11 @@ public class ImproveDiscoveryData {
 	 transformLog.remove(trace);
   }
 
+  public void setBaseLog(XLog Aux)
+  {
+	  this.transformLog= (XLog) Aux.clone();
+
+  }
   public void RemoveActivity(XEvent event_remove)
   {
 		for (XTrace trace : this.log) {

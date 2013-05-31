@@ -21,6 +21,7 @@ public class ImproveDiscoveryPerformanceData {
       private boolean ContainTimes;
 	  private double[] finalTime;
 	  private double[] sortedFinalTime;
+	  public int ponderator=0;
 	  
 	  public ImproveDiscoveryPerformanceData(XLog log) {
 		// TODO Auto-generated constructor stub
@@ -42,7 +43,37 @@ public class ImproveDiscoveryPerformanceData {
 		 {
 			 ContainTimes=false;
 		 }
-	}
+	  }
+	  
+	  public boolean IsInHours()
+	  {
+		    if(inDays && !inHours && !inMinutes)
+		    	return false;
+		    else if(inHours && !inMinutes)
+		    	return true;
+		    else 
+		    	return false;
+	  }
+	  
+	  public boolean IsInDays()
+	  {
+		    if(inDays && !inHours && !inMinutes)
+		    	return true;
+		    else if(inHours && !inMinutes)
+		    	return false;
+		    else 
+		    	return false;
+	  }
+	  
+	  public boolean IsInMinutes()
+	  {
+		    if(inDays && !inHours && !inMinutes)
+		    	return false;
+		    else if(inHours && !inMinutes)
+		    	return false;
+		    else 
+		    	return true;
+	  }
 	  
 	  public boolean HaveTimes()
 	  {
@@ -130,27 +161,41 @@ public class ImproveDiscoveryPerformanceData {
 			    timeInHours[j]= diffInSeconds/3600;
 			    timeInMinutes[j]= diffInSeconds/60;
 			    timeInSeconds[j]= diffInSeconds;
-			    
+	    
 			    //System.out.print("\n"+timeInDays[j]+" days, "+ timeInHours[j]+ " hours, "+timeInMinutes[j]+" minutes,"+timeInSeconds[j]+" secondes");
 
 			    //is in days
-			    if(diffInSeconds/86400>=1)  	
+			    if(timeInDays[j]>=1)  	
 			    inDays=true;
-			    if(diffInSeconds/86400<1)
+			    else if(timeInHours[j]>=1)
 			    inHours=true;
-			    if(diffInSeconds/3600<1)
+			    else if(timeInMinutes[j]>=1)
 			    inMinutes=true;
-			    
+		 }
 			    if(inDays && !inHours && !inMinutes)
-			    	finalTime=timeInDays;
+			    {
+			    	finalTime=timeInDays;	
+			    	ponderator=86400;
+			    }
 			    else if(inHours && !inMinutes)
+			    {
 			    	finalTime=timeInHours;
-			    else if(inMinutes)
-			    	finalTime=timeInMinutes;
-			    else
-			    	finalTime=timeInSeconds;
+			    	ponderator=3600;
 
-		  }
+			    }
+			    else if(inMinutes)
+			    {	
+			    	finalTime=timeInMinutes;
+			    	ponderator=60;
+
+			    }
+			    else
+			    {
+			    	finalTime=timeInSeconds;
+			    	ponderator=1;
+			    }
+
+		  //}
 		 
 		    sortedFinalTime=finalTime.clone(); 
 		    Arrays.sort(sortedFinalTime);
