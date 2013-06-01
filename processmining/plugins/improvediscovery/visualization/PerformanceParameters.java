@@ -17,8 +17,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryData;
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPData;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPTransformation;
 
 import com.fluxicon.slickerbox.ui.SlickerCheckBoxUI;
 import com.fluxicon.slickerbox.ui.SlickerSliderUI;
@@ -44,14 +44,14 @@ public class PerformanceParameters extends JPanel {
 	protected Color COLOR_BG2 = new Color(120, 120, 120);
 	protected Color COLOR_FG = new Color(30, 30, 30);
 	protected Font smallFont;
-	protected ImproveDiscoveryData Data;
-	protected ImproveDiscoveryTransformation DataTransformation;
+	protected OLAPData Data;
+	protected OLAPTransformation DataTransformation;
 	protected 		JPanel performanceHeaderPanel;
 	protected JPanel performanceParametersContainer;
 	protected JPanel downSettingsPanel;
 	protected boolean multiTime;
 	protected JLabel maxSliderHeader;
-	public PerformanceParameters(ImproveDiscoveryTransformation DataTransformation) {
+	public PerformanceParameters(OLAPTransformation DataTransformation) {
 		// TODO Auto-generated constructor stub
 		this.DataTransformation= DataTransformation;
 		Data=DataTransformation.GetData();

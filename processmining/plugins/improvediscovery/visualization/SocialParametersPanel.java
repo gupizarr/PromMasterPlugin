@@ -21,8 +21,8 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
 
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryData;
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPData;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPTransformation;
 import org.processmining.plugins.socialnetwork.miner.gui.PanelSimilarTask;
 
 import com.fluxicon.slickerbox.ui.SlickerCheckBoxUI;
@@ -40,8 +40,8 @@ public class SocialParametersPanel extends JPanel {
 	PanelSimilarTask STPanel;
 	protected JLabel edgesConcurrencyThresholdLabel;
 	protected JSlider filterSlider;
-	protected ImproveDiscoveryTransformation DataTransformation;
-	protected ImproveDiscoveryData DataDiscovery;
+	protected OLAPTransformation DataTransformation;
+	protected OLAPData DataDiscovery;
 	protected JComboBox Options;
 	protected JPanel GroupPanel;
 	protected JPanel RelationsPanel;
@@ -57,7 +57,7 @@ public class SocialParametersPanel extends JPanel {
 
 
 	
-	public SocialParametersPanel(ImproveDiscoveryTransformation Transformation) {
+	public SocialParametersPanel(OLAPTransformation Transformation) {
 	
 		JCheckBoxResources= new ArrayList<JCheckBox>();
 		JCheckBoxGroups= new ArrayList<JCheckBox>();		

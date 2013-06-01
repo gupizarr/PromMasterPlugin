@@ -15,12 +15,13 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryClusterData;
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryClusterTransformation;
-import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ImproveDiscoveryTransformation;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ClusterData;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.ClusterTransformation;
+import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPTransformation;
 
 import com.fluxicon.slickerbox.ui.SlickerCheckBoxUI;
 
@@ -40,16 +41,18 @@ public class ClusterParameters  extends JPanel{
 	protected JPanel[] option_cluster_panels;
     protected JPanel option_panel;
 	protected Map<String,JCheckBox> ClustersCasesCheckBoxes=new HashMap<String,JCheckBox>();
-	private ImproveDiscoveryTransformation DataTransformation;
+	private OLAPTransformation DataTransformation;
 	protected JComboBox numberOfClusters;
 	protected JPanel checkClusterContainer;
     protected ArrayList<JLabel> JLabelClusterArray;
     protected ArrayList<JLabel> JLabelSubClusterArray;
     protected boolean big= true;
+    protected JFrame frame;
     protected JPanel optionSubclusterCases;
-    protected JPanel  edgesConcurrencyHeaderPanel;
-    
-	public ClusterParameters(ImproveDiscoveryTransformation Transformation) {
+    protected JPanel  ClusterMenuHeader;
+    protected JLabel porcentaje;
+    protected JLabel title;
+	public ClusterParameters(OLAPTransformation Transformation) {
 		// TODO Auto-generated constructor stub
 		this.DataTransformation=Transformation;
 		
@@ -68,6 +71,7 @@ public class ClusterParameters  extends JPanel{
          this.setOpaque(true);
  		
          this.setLayout(new BorderLayout());
+ 		 title= new JLabel("Select Number of clusters");
          AddHeader();
          ClustersParameters();
 		 repaint();
@@ -88,10 +92,14 @@ public class ClusterParameters  extends JPanel{
 			
 	}
 
-	
-	public void ResetPanel()
+	public void DummyMethod()
 	{
+		this.ClusteredgesConcurrencyActiveBox.get(0).setText("si funciona ctm");
+		this.ClusteredgesConcurrencyActiveBox.get(0).repaint();
+	}
 	
+	public void CleanPanels()
+	{
 		 ClusteredgesConcurrencyActiveBox= new ArrayList<JCheckBox>();
 		 SubClusteredgesConcurrencyActiveBox= new ArrayList<JLabel>();
          JLabelClusterArray=new ArrayList();
@@ -99,14 +107,32 @@ public class ClusterParameters  extends JPanel{
          this.remove(concurrencySliderPanel);
         
          checkClusterContainer.removeAll();
- 		 edgesConcurrencyHeaderPanel.removeAll();
- 		 concurrencySliderPanel.remove(checkClusterContainer);
- 		 concurrencySliderPanel.remove(option_panel);
- 		 concurrencySliderPanel.remove(optionSubclusterCases);
-         concurrencySliderPanel.repaint();
+ 		 ClusterMenuHeader.removeAll();
+ 		 
+ 		 checkClusterContainer.removeAll();
+ 		 checkClusterContainer.repaint();
+ 	 	 //concurrencySliderPanel.remove(checkClusterContainer);
+ 		 
+ 	 	 option_panel.removeAll();
+ 		 option_panel.repaint();
+ 		 //concurrencySliderPanel.remove(option_panel);
+ 		 
+ 		 optionSubclusterCases.removeAll();
+ 		 optionSubclusterCases.repaint();
+ 		 //concurrencySliderPanel.remove(optionSubclusterCases);
+ 		 
+ 		 concurrencySliderPanel.removeAll();
+ 		 concurrencySliderPanel.repaint();
+	
+	}
+	public void ResetPanel()
+	{
+	
+		 CleanPanels();
          AddHeader();
          ClustersParameters();
 		 repaint();		
+		 System.out.print("\n Group cluster:"+ this.ClusteredgesConcurrencyActiveBox.size());
 	}
 	
 	public void AddHeader()
@@ -122,14 +148,13 @@ public class ClusterParameters  extends JPanel{
 		// setup concurrency parent panel
 
 	    //Checkbox de grupos humanos
-		edgesConcurrencyHeaderPanel = new JPanel();   
+		ClusterMenuHeader = new JPanel();   
 		checkClusterContainer= new JPanel();
 		checkClusterContainer.setOpaque(false);
 		JLabel data= new JLabel(LogData());
-		edgesConcurrencyHeaderPanel.add(data);
+		ClusterMenuHeader.add(data);
 		//Label Number of Clusters
-		JLabel title= new JLabel("Select Number of clusters");
-		edgesConcurrencyHeaderPanel.add(title);
+		ClusterMenuHeader.add(title);
 	}
 	
 	public void ClustersParameters()
@@ -147,15 +172,15 @@ public class ClusterParameters  extends JPanel{
 		
 		numberOfClusters.setSelectedIndex(2);   
 		
-		edgesConcurrencyHeaderPanel.add(numberOfClusters);
+		ClusterMenuHeader.add(numberOfClusters);
 		
 		AddClustersParameters(true);
-		//edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
-		edgesConcurrencyHeaderPanel.setOpaque(false);
-		edgesConcurrencyHeaderPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
-		edgesConcurrencyHeaderPanel.add(Box.createVerticalGlue());   		
-		edgesConcurrencyHeaderPanel.setPreferredSize(new Dimension(150,70));
-		this.add(edgesConcurrencyHeaderPanel, BorderLayout.NORTH);
+		//ClusterMenuHeader.setLayout(new BoxLayout(ClusterMenuHeader, BoxLayout.Y_AXIS));
+		ClusterMenuHeader.setOpaque(false);
+		ClusterMenuHeader.setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
+		ClusterMenuHeader.add(Box.createVerticalGlue());   		
+		ClusterMenuHeader.setPreferredSize(new Dimension(150,70));
+		this.add(ClusterMenuHeader, BorderLayout.NORTH);
 		this.add(concurrencySliderPanel, BorderLayout.CENTER);
 		buildComponent(110,530,checkClusterContainer,concurrencySliderPanel,0);
 
@@ -175,15 +200,15 @@ public class ClusterParameters  extends JPanel{
 		}
 		numberOfClusters.setSelectedIndex(2);   
 		
-		edgesConcurrencyHeaderPanel.add(numberOfClusters);
+		ClusterMenuHeader.add(numberOfClusters);
 		
 		AddClustersParameters(true);
-		//edgesConcurrencyHeaderPanel.setLayout(new BoxLayout(edgesConcurrencyHeaderPanel, BoxLayout.Y_AXIS));
-		edgesConcurrencyHeaderPanel.setOpaque(false);
-		edgesConcurrencyHeaderPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
-		edgesConcurrencyHeaderPanel.add(Box.createVerticalGlue());   		
-		edgesConcurrencyHeaderPanel.setPreferredSize(new Dimension(150,70));
-		this.add(edgesConcurrencyHeaderPanel, BorderLayout.NORTH);
+		//ClusterMenuHeader.setLayout(new BoxLayout(ClusterMenuHeader, BoxLayout.Y_AXIS));
+		ClusterMenuHeader.setOpaque(false);
+		ClusterMenuHeader.setBorder(BorderFactory.createEmptyBorder(5, 10, 20, 10));
+		ClusterMenuHeader.add(Box.createVerticalGlue());   		
+		ClusterMenuHeader.setPreferredSize(new Dimension(150,70));
+		this.add(ClusterMenuHeader, BorderLayout.NORTH);
 		this.add(concurrencySliderPanel, BorderLayout.CENTER);
 		buildComponent(110,530,checkClusterContainer,concurrencySliderPanel,0);
 
@@ -215,11 +240,11 @@ public class ClusterParameters  extends JPanel{
 		
 			numberOfCheckBoxes=Integer.parseInt(numberOfClusters.getSelectedItem().toString());
 		
-			DataTransformation.GetClusterTransformation().SetClusterData(new ImproveDiscoveryClusterData(DataTransformation.GetData().GetCurrentLog(),numberOfCheckBoxes));		
+			DataTransformation.GetClusterTransformation().SetClusterData(new ClusterData(DataTransformation.GetData().GetCurrentLog(),numberOfCheckBoxes));		
 		
-			DataTransformation.SetClusterTransformation(new ImproveDiscoveryClusterTransformation(
+			DataTransformation.SetClusterTransformation(new ClusterTransformation(
 		
-			new ImproveDiscoveryClusterData(DataTransformation.GetData().GetCurrentLog(),numberOfCheckBoxes)));		
+			new ClusterData(DataTransformation.GetData().GetCurrentLog(),numberOfCheckBoxes)));		
 		
 			checkClusterContainer.repaint();
 		}			
@@ -557,4 +582,8 @@ public class ClusterParameters  extends JPanel{
 		JLabelSubClusterArray.clear();
 		JLabelClusterArray.clear();
 	}
+	
+	
+  
+		  
 }
