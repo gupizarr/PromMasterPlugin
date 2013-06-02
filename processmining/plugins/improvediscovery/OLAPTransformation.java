@@ -39,9 +39,14 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
     private ArrayList<String> RemovedResources;  
     private int currentCluster=-1;
     private XLog SocialBackUpUnit;
+    private List<List<String>> AllFilterTraces;
+    protected StatisticsCalculator Calculator;
+
 
 	public OLAPTransformation(OLAPData Data, final PluginContext context)  {
 		// TODO Auto-generated constructor stub
+		Calculator=new StatisticsCalculator();
+
 		this.RemovedClusters= new ArrayList<String>();
 		this.RemovedParticularCases= new ArrayList<List<String>>();
 		this.context=context;
@@ -87,19 +92,21 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	{
 		 ArrayList<XTrace> KeptXTrace= new ArrayList<XTrace>();
  	    
-		 
-		 System.out.print("\n min:"+minTimeValue);
-		 System.out.print("\n max:"+maxTimeValue);
+		  double[] dataList= new double[Data.GetBaseLog().size()];
+          int count=0;		
 
 			 for(int i=0; i<Data.GetBaseLog().size(); i++)
 		     {
 				    if((Data.GetPerformanceData().getFinalTimes()[i])>=minTimeValue && (Data.GetPerformanceData().getFinalTimes()[i])<=maxTimeValue)
-				    {    		 
+				    {    
+				    	dataList[count]=(Data.GetPerformanceData().getFinalTimes()[i]);
+				    	count++;
 		       		 KeptXTrace.add(Data.GetBaseLog().get(i));
 				    }
 		    	 
 		     }
-		 
+			
+      
 
 		 Data.SetCurrentLog( new XLogImpl(new XAttributeMapLazyImpl<XAttributeMapImpl>(XAttributeMapImpl.class)));
 	     Data.GetCurrentLog().addAll(KeptXTrace);
@@ -161,7 +168,6 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	    	RemovedClusters.remove(cluster);
 	    }
 	   
-	    ClusterFilter();
 	    
 	}
     
@@ -171,17 +177,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	    {
 		RemovedClusters.add(cluster);
 	    }
-	    ClusterFilter();
-	}
-	
-	public void ClusterFilter()
-	{
-		
-		
-		    System.out.print("\n Log size in cluster filter:"+Data.GetCurrentLog().size());		    
-		    RemoveTracesFromClusters();  
-		    System.out.print("\n Log size after cluster filter:"+Traces.size());
-		    UpdateForClusters();
+	  
 	}
 	
 	
@@ -203,7 +199,6 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	    }
 	    
 		}
-	    TracesFilter(cluster);
     }
 
 	public void RemoveTraceAndFilter(int caseIndex,int clusterIndex)
@@ -220,17 +215,18 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	    {
          RemovedParticularCases.add(RemovedCase);
 	    }
-	    TracesFilter(clusterIndex);
+		 Traces = new ArrayList<XTrace>();
+
 	}
-	
-	
+
+
 	public void ClearTraceList()
 	{
         RemovedParticularCases.clear();
 		this.GetData().ReturnToBaseLog();
 
 	}
-	
+	/*
 	public void TracesFilter(int clusterIndex)
 	{
 		
@@ -244,66 +240,63 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	public void RemoveTracesFromTraces(int clusterIndex)
 	{
 	
-		 Traces = new ArrayList<XTrace>();
-		 boolean removeTrace=false;
       	 		
 		      for (int u=0; u<this.Data.GetCurrentLog().size(); u++)
 			  {
 		 	       XTrace trace = this.Data.GetCurrentLog().get(u);   
-		 		   removeTrace=false; 
-		 			for(int c=0;c<RemovedParticularCases.size();c++)
-		 			{  	//Comienza el trace
-		 					 if(IsTheSameTrace(trace,RemovedParticularCases.get(c)))
-		 					 {
-		 						 removeTrace=true;
-		 					 }					 		    			  	 			    		
-		 			}
-			  	 
-		 			if(!removeTrace && !Traces.contains(trace))
-		 			{
-	 				 Traces.add(trace);
-		 			}
+		 	      SearchAndRemoveTrace(trace);
 			  }
 	
       	  
 	}
+	*/
 	
-	public void RemoveTracesFromClusters()
+	public void  SearchAndRemoveTrace(XTrace trace)
 	{
+		    boolean removeTrace=false; 
+			for(int c=0;c<RemovedParticularCases.size();c++)
+			{  	//Comienza el trace
+					 if(IsTheSameTrace(trace,RemovedParticularCases.get(c)))
+					 {
+						 removeTrace=true;
+					 }					 		    			  	 			    		
+			}
+	  	 
+			if(!removeTrace && !Traces.contains(trace))
+			{
+			 Traces.add(trace);
+			}
+	}
+	public void GroupClusters()
+	{
+		  AllFilterTraces= new ArrayList<List<String>>();
 		  Traces = new ArrayList<XTrace>();
-		  boolean removeTrace=false;
           int count=0;
-		  List<List<String>> AllFilterTraces= new ArrayList<List<String>>();
-       	  if(RemovedClusters.size()!=this.ClusterTransformation.GetClusterData().GetActivityClusters().size())
-       	  { 
           for(int j=0;j<this.RemovedClusters.size();j++)
 		  {
-        	 count=Integer.parseInt(RemovedClusters.get(j));
-        	 AllFilterTraces.addAll(this.ClusterTransformation.GetClusterData().GetActivityClusters().get(count));
+            count=Integer.parseInt(RemovedClusters.get(j));
+       	   AllFilterTraces.addAll(this.ClusterTransformation.GetClusterData().GetActivityClusters().get(count));
 		  }
-		 			
-		      for (int u=0; u<this.Data.GetBaseLog().size(); u++)
- 			  {
-		 	       XTrace trace = this.Data.GetBaseLog().get(u);   
-		 		   removeTrace=false; 
-              	 
-		 			for(int c=0;c<AllFilterTraces.size();c++)
-		 			{  	//Comienza el trace
-		 					 if(IsTheSameTrace(trace,AllFilterTraces.get(c)))
-		 					 {
-		 						 removeTrace=true;
-		 					 }					 		    			  	 			    		
-		 			}
- 			  	 
-		 			if(!removeTrace && !Traces.contains(trace))
-		 			{
-	 				 Traces.add(trace);
-		 			}
- 			  }
-	
-       	  }
 	}
+
 	 
+	public void SearchTrace(XTrace trace)
+	{ 
+      	    boolean removeTrace=false; 
+
+			for(int c=0;c<AllFilterTraces.size();c++)
+			{  	//Comienza el trace
+					 if(IsTheSameTrace(trace,AllFilterTraces.get(c)))
+					 {
+						 removeTrace=true;
+					 }					 		    			  	 			    		
+			}
+	  	 
+			if(!removeTrace && !Traces.contains(trace))
+			{ 
+			 Traces.add(trace);
+			}
+	}
 	public void UpdateForClusters()
 	  {
 	
@@ -365,6 +358,11 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 		  Data.ResetToOriginalLog();
 		  GenerateHeuristicModel();
 	  }
+	  
+	  public void ResetResourceFilter()
+	  {
+		  RemovedResources.clear();
+	  }
 	  public void UpdateGraphWithPerformanceChanges()
 	  {
 		
@@ -410,12 +408,10 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			  }
               System.out.print("\n number of events: "+num);
 	  }
-	  public void UpdateGraphWithSocialChanges()
+	  public void UpdateGraphWithSocialChanges(String type)
 	  {
-		
 		      
 		   
-
 			 ShowLog();
 			 
 			  if(!Data.GetCurrentLog().isEmpty() && Data.GetCurrentLog().get(0).size()==1)
@@ -450,8 +446,16 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			  }
 			  
 			  //update socialview
-			  this.SocialTransformation.SetWorkingTogetherToShow();
+			  
+			  if(type.equals("Working Together"))
+			  this.SocialTransformation.SetWorkingTogetherToShow(this.GetData().GetWorkingLog());
+			  else if(type.equals("Hanover of Work"))
+			  this.SocialTransformation.SetHandoverWTaskToShow(this.GetData().GetWorkingLog());
+			  else
+			  this.SocialTransformation.SetSimilarTaskToShow(this.GetData().GetWorkingLog());
 
+
+				 
 		  }
 		 
 			
@@ -534,7 +538,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 		  return fixLog;
 	  }
 	  
-	  public void SocialFilter(String Rols)
+	  public void SocialFilter(String Rols,String type)
 	  {
 		    if(!Rols.equals(""))
 		    Rols= this.SocialTransformation.TranslateNode(Integer.parseInt(Rols));
@@ -546,26 +550,24 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			RemovedResources.add(Rols);
 		    }
 		 
-		    SocialFilterRemove();
+		    SocialFilterRemove(type);
 	  }
 	  
 	
 	  public void RestoreBaseXLog()
 	  {
-		System.out.print("\n backup log size:"+ this.SocialBackUpUnit.size());
 		this.Data.setBaseLog(this.SocialBackUpUnit);  
 	  }
 	  
-	  public void SocialFilterRemove()
+	  public void SocialFilterRemove(String type)
 	  {
-		    
+
 	        String resource;
 	        ShowLog();
 			System.out.print("\n Log size before:"+ this.GetData().GetBaseLog().size());
             Traces.clear();
 
 			//por cada persona
-	       System.out.print("\n personas a remover:"+RemovedResources);
 	          for (int u=0; u<this.Data.GetBaseLog().size(); u++)
 			  {	        	  
 
@@ -590,14 +592,13 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			  } 
 	 		
 	         
-		      System.out.print("\n se mantienen: "+Traces.size());
 
 		      this.Data.SetCurrentLog(new XLogImpl(new XAttributeMapLazyImpl<XAttributeMapImpl>(XAttributeMapImpl.class)));
 			  this.Data.GetCurrentLog().addAll(Traces);
 			  System.out.print("\n Log size after:"+ this.GetData().GetCurrentLog().size());
 			//		  RestoreBaseXLog();
 	  
-	         UpdateGraphWithSocialChanges();
+	         UpdateGraphWithSocialChanges(type);
 	  }
 	  
 	  
@@ -614,8 +615,6 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	    }
   		}
 	   
-	    TracesFilter(cluster);
-
       }
       
       public void RestoreCase(int cluster,int  caseIndex)
@@ -629,16 +628,17 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	    	RemovedParticularCases.remove(RemovedCase);
 	    }
   			   
-	    TracesFilter(cluster);
+	    
 
       }
 
-	  public void AddSocialResource(String resource)
+	  public void AddSocialResource(String resource,String type)
 	  {
+		  
 	     //Data.SetCurrentLog((XLog) Data.GetOriginalWorkingLog().clone());
 	     String person= this.SocialTransformation.TranslateNode(Integer.parseInt(resource));
 	     RemovedResources.remove(person);
-	     SocialFilterRemove();
+	     SocialFilterRemove(type);
 	  }
 	  
 	  public void setContext(PluginContext context)
@@ -646,15 +646,14 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 	   this.context=context;
 	  }
 	  
-	  public void GroupFilter(String GroupName)
+	  public void GroupFilter(String GroupName,String type)
 	  {
 			ArrayList<Integer> Team;
 			
-		  System.out.print("\n Group Filter");
 		  if(GroupName.equals("-1"))
     		 Team=this.SocialTransformation.GetGroupsOneTwo();
 		  else
-			 Team=this.SocialTransformation.GetTeamsWT().get(Integer.parseInt(GroupName));
+			 Team=this.SocialTransformation.GetTeams().get(Integer.parseInt(GroupName));
 
 			 for(int j=0; j<Team.size();j++)
 			 {
@@ -665,11 +664,11 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 				}			    
 			
 			 }
-			  SocialFilterRemove();
+			  SocialFilterRemove(type);
 
 	  }
 	  
-	  public void RestoreGroup(String GroupName)
+	  public void RestoreGroup(String GroupName,String type)
 	  {
 		 
 		  		ArrayList<Integer> Team;
@@ -677,7 +676,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 		  if(GroupName.equals("-1"))
     		 Team=this.SocialTransformation.GetGroupsOneTwo();
 		  else
-			 Team=this.SocialTransformation.GetTeamsWT().get(Integer.parseInt(GroupName));
+			 Team=this.SocialTransformation.GetTeams().get(Integer.parseInt(GroupName));
 			 
 			 for(int j=0; j<Team.size();j++)
 			 {
@@ -690,7 +689,7 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
 			 }
 			 
 			  Traces.clear();
-			  SocialFilterRemove();
+			  SocialFilterRemove(type);
 	  }
 	  
 	  public void GetCurrentResourceList()
@@ -743,6 +742,8 @@ import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization
     		  }	
          
        	  }
+	  
+	
 	  
  }
 

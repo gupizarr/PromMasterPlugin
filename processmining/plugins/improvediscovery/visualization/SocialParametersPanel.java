@@ -29,8 +29,10 @@ import com.fluxicon.slickerbox.ui.SlickerCheckBoxUI;
 import com.fluxicon.slickerbox.ui.SlickerSliderUI;
 
 
+
 public class SocialParametersPanel extends JPanel {
    
+
 	protected JCheckBox[] edgesConcurrencyActiveBox;
 	protected Color COLOR_BG = new Color(60, 60, 60);
 	protected Color COLOR_BG2 = new Color(120, 120, 120);
@@ -59,6 +61,7 @@ public class SocialParametersPanel extends JPanel {
 	
 	public SocialParametersPanel(OLAPTransformation Transformation) {
 	
+		
 		JCheckBoxResources= new ArrayList<JCheckBox>();
 		JCheckBoxGroups= new ArrayList<JCheckBox>();		
 		JLabelResources= new ArrayList<JLabel>();
@@ -202,18 +205,25 @@ public class SocialParametersPanel extends JPanel {
 
 				if(Options.getSelectedItem().toString().equals("Working Together"))
 				{
+					System.out.print("\n wt recal");
 				DataTransformation.GetSocialTransformation().RecalculateSocialRelations("WT",value);
 				DataTransformation.GetSocialTransformation().SearchGroups(DataTransformation.GetSocialTransformation(). GetMatrix2D("WT"));
 				}	
 				else if(Options.getSelectedItem().toString().equals("Similar Task"))
 				{
+					System.out.print("\n st recal");
+
 					DataTransformation.GetSocialTransformation().RecalculateSocialRelations("ST",value);
 					DataTransformation.GetSocialTransformation().SearchGroups(DataTransformation.GetSocialTransformation(). GetMatrix2D("ST"));
 								
 				}
 				else
 				{
-					
+					System.out.print("\n hw recal");
+
+					DataTransformation.GetSocialTransformation().RecalculateSocialRelations("HW",value);
+					DataTransformation.GetSocialTransformation().SearchGroups(DataTransformation.GetSocialTransformation(). GetMatrix2D("HW"));
+				
 				}
 				
 				RelationsPanel.removeAll();
@@ -225,7 +235,7 @@ public class SocialParametersPanel extends JPanel {
 				
 				AddGroupCheckBoxes();
 				
-				GroupPanel.setOpaque(true);
+				GroupPanel.setOpaque(false);
 				GroupPanel.repaint();
 				
 			}
@@ -255,19 +265,14 @@ public class SocialParametersPanel extends JPanel {
 	
 	public void ResetPanel()
 	{
+		JLabelResources.clear();
+	    JLabelGroups.clear();
+		JCheckBoxResources.clear();
+		JCheckBoxGroups.clear();
+		actualValue.setText("Actual Value: 0.0");
 		this.filterSlider.setValue(0);
 		
-		if(Options.getSelectedItem().toString().equals("Working Together"))
-		{
-		DataTransformation.GetSocialTransformation().RecalculateSocialRelations("WT",0);
-		DataTransformation.GetSocialTransformation().SearchGroups(DataTransformation.GetSocialTransformation(). GetMatrix2D("WT"));
-		}	
-		else if(Options.getSelectedItem().toString().equals("Similar Task"))
-		{
-	    DataTransformation.GetSocialTransformation().RecalculateSocialRelations("ST",0);
-		DataTransformation.GetSocialTransformation().SearchGroups(DataTransformation.GetSocialTransformation(). GetMatrix2D("ST"));
-						
-		}
+
 		RelationsPanel.removeAll();
 	    PeoplesPanel.removeAll();
 
@@ -488,7 +493,7 @@ public class SocialParametersPanel extends JPanel {
 					
 					label.setText("-");							
 				   
-					final ArrayList<Integer> Members=DataTransformation.GetSocialTransformation().GetTeamsWT().get(group_index);
+					final ArrayList<Integer> Members=DataTransformation.GetSocialTransformation().GetTeams().get(group_index);
 					int indexMember=Members.size();
 					int number_of_subgroups=Math.round(Members.size()/11);
 					if(Members.size()%11!=0)
@@ -566,9 +571,9 @@ public class SocialParametersPanel extends JPanel {
 	
 	public void CreateOptions()
 	{
-		for(int j=0;j<DataTransformation.GetSocialTransformation().getNumberOfWorkingTogTeam();j++)
+		for(int j=0;j<DataTransformation.GetSocialTransformation().getNumberOfTeam();j++)
 		{
-	        ArrayList<Integer> Members=DataTransformation.GetSocialTransformation().GetTeamsWT().get(j);
+	        ArrayList<Integer> Members=DataTransformation.GetSocialTransformation().GetTeams().get(j);
 			AddSocialOptions(j, Members);
 
 		}
@@ -704,10 +709,10 @@ public class SocialParametersPanel extends JPanel {
 				AddGroupOfTwo();
 			}
 	
-			for(int j=0;j<DataTransformation.GetSocialTransformation().getNumberOfWorkingTogTeam();j++)
+			for(int j=0;j<DataTransformation.GetSocialTransformation().getNumberOfTeam();j++)
 			{	
 				
-			        ArrayList<Integer> Members=DataTransformation.GetSocialTransformation().GetTeamsWT().get(j);
+			        ArrayList<Integer> Members=DataTransformation.GetSocialTransformation().GetTeams().get(j);
 					AddSocialOptions(j, Members);
 			}				
 		}

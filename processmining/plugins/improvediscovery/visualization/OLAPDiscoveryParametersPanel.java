@@ -109,8 +109,8 @@ public class OLAPDiscoveryParametersPanel extends JPanel {
 			tabContainerPanel.setLayout(new BorderLayout());
 
 		 
-			 this.setBounds(1020, 50, 350, 610);
-			 this.setSize(new Dimension(350,610));
+			 this.setBounds(1020, 55, 350, 600);
+			 this.setSize(new Dimension(350,600));
 			 tabPanelWidth=365;
 		 
 		 this.fuzzyview(); 
@@ -145,8 +145,8 @@ public class OLAPDiscoveryParametersPanel extends JPanel {
 		
 
 		tabPane.setMinimumSize(new Dimension(tabPanelWidth, 220));
-		tabPane.setMaximumSize(new Dimension(tabPanelWidth, 580));
-		tabPane.setPreferredSize(new Dimension(tabPanelWidth, 580));
+		tabPane.setMaximumSize(new Dimension(tabPanelWidth, 560));
+		tabPane.setPreferredSize(new Dimension(tabPanelWidth, 560));
 		tabPane.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
 	}
 

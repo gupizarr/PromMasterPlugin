@@ -52,14 +52,13 @@ public class ClusterParameters  extends JPanel{
     protected JPanel  ClusterMenuHeader;
     protected JLabel porcentaje;
     protected JLabel title;
+    protected Map<String,Boolean> eventClusterCaseAssign;
 	public ClusterParameters(OLAPTransformation Transformation) {
 		// TODO Auto-generated constructor stub
 		this.DataTransformation=Transformation;
 		
 		this.smallFont = new Font("11f", 12, 10);
 		 ClusteredgesConcurrencyActiveBox= new ArrayList<JCheckBox>();
-		 //int lenght=DataTransformation.GetData().GetCurrentLog().size();
-		 //lenght=Math.round(lenght/14)+1;
 		 SubClusteredgesConcurrencyActiveBox= new ArrayList<JLabel>();
          JLabelClusterArray=new ArrayList();
          JLabelSubClusterArray= new ArrayList<JLabel>();
@@ -69,7 +68,7 @@ public class ClusterParameters  extends JPanel{
          this.setBackground(COLOR_BG2);
  		
          this.setOpaque(true);
- 		
+         eventClusterCaseAssign= new HashMap<String,Boolean>();
          this.setLayout(new BorderLayout());
  		 title= new JLabel("Select Number of clusters");
          AddHeader();
@@ -91,15 +90,10 @@ public class ClusterParameters  extends JPanel{
 			return "<html> Traces: "+DataTransformation.GetData().GetCurrentLog().size()+"<br> Cases: "+cases;
 			
 	}
-
-	public void DummyMethod()
-	{
-		this.ClusteredgesConcurrencyActiveBox.get(0).setText("si funciona ctm");
-		this.ClusteredgesConcurrencyActiveBox.get(0).repaint();
-	}
 	
 	public void CleanPanels()
 	{
+		 eventClusterCaseAssign= new HashMap<String, Boolean>();
 		 ClusteredgesConcurrencyActiveBox= new ArrayList<JCheckBox>();
 		 SubClusteredgesConcurrencyActiveBox= new ArrayList<JLabel>();
          JLabelClusterArray=new ArrayList();
@@ -132,7 +126,6 @@ public class ClusterParameters  extends JPanel{
          AddHeader();
          ClustersParameters();
 		 repaint();		
-		 System.out.print("\n Group cluster:"+ this.ClusteredgesConcurrencyActiveBox.size());
 	}
 	
 	public void AddHeader()
@@ -164,10 +157,13 @@ public class ClusterParameters  extends JPanel{
 		numberOfClusters = new JComboBox();
 		numberOfClusters.setPreferredSize(new Dimension(40, 25));
 		numberOfClusters.setMaximumSize(new Dimension(40,25));
+		int index=0;
 		for(int j=1;j<=DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCase();j++ )
 		{
 			ClusteredgesConcurrencyActiveBox.add(new JCheckBox("Cluster "+j));
+			eventClusterCaseAssign.put(""+index, false);
 			numberOfClusters.addItem(j);
+			index++;
 		}
 		
 		numberOfClusters.setSelectedIndex(2);   
@@ -406,9 +402,9 @@ public class ClusterParameters  extends JPanel{
 	public void ShowComplexCases(int value)
 	{
 		int cases=DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(value);
-		int sub_check_boxes =  Math.round(cases/14);
+		int sub_check_boxes =  Math.round(cases/16);
 		
-		if(cases%14!=0)
+		if(cases%16!=0)
 			sub_check_boxes++;
 		
 		option_panel.removeAll();
@@ -430,10 +426,10 @@ public class ClusterParameters  extends JPanel{
 			for(int j=0;j<value;j++)
 			{
 				int number=DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(j);
-				if(number>14)
+				if(number>16)
 				{
-				index+=Math.round(number/14);
-				if(index%14!=0)
+				index+=Math.round(number/16);
+				if(index%16!=0)
 					index++;
 				}
 			}
@@ -449,8 +445,8 @@ public class ClusterParameters  extends JPanel{
 				cluster_panel.add(name,BorderLayout.PAGE_START);
 				cluster_panel.setOpaque(false);
 			    Insets insets = option_panel.getInsets();
-			    margin_top=insets.top+5+28*c;
-			    cluster_panel.setPreferredSize(new Dimension(130,30));
+			    margin_top=insets.top+5+24*c;
+			    cluster_panel.setPreferredSize(new Dimension(130,24));
 			    Dimension size = cluster_panel.getPreferredSize();
 			    cluster_panel.setBounds( insets.left, margin_top,
 			                 size.width, size.height);
@@ -530,14 +526,14 @@ public class ClusterParameters  extends JPanel{
 				if(DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(count)>=15)
 				{
 					int cases=DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(count);
-					int sub_check_boxes =  Math.round(cases/14);
+					int sub_check_boxes =  Math.round(cases/16);
 					
-					if(cases%14!=0)
+					if(cases%16!=0)
 						sub_check_boxes++;
 					
 					//Agregar la tercera columna
 					int number;
-					int check_cases=14;
+					int check_cases=16;
 			
 					//SubClusteredgesConcurrencyActiveBox.length;
 					for(int c=0;c<sub_check_boxes;c++)		
@@ -555,10 +551,10 @@ public class ClusterParameters  extends JPanel{
 							
 							
 							if(c<sub_check_boxes-1)
-								check_cases=14;
+								check_cases=16;
 							else
-								check_cases=cases%14;
-							JLabel name=new JLabel("Agrupation "+number+"["+check_cases+"]");
+								check_cases=cases%16;
+							JLabel name=new JLabel("Group "+number+"["+check_cases+"]");
 							name.setOpaque(false);
 							name.setForeground(COLOR_FG);
 							name.setFont(new Font("11f", 12, 10));

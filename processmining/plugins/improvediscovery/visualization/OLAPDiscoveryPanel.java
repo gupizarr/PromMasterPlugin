@@ -1,6 +1,5 @@
 package org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.visualization;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -12,21 +11,22 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.ProgressMonitor;
-import javax.swing.SwingWorker;
 
+import org.deckfour.xes.info.XLogInfo;
+import org.deckfour.xes.info.XLogInfoFactory;
 import org.processmining.framework.plugin.PluginContext;
+import org.processmining.models.graphbased.directed.socialnetwork.SocialNetwork;
+import org.processmining.models.heuristics.HeuristicsNet;
+import org.processmining.models.heuristics.HeuristicsNetGraph;
 import org.processmining.models.heuristics.elements.Activity;
 import org.processmining.models.jgraph.ProMJGraph;
 import org.processmining.models.jgraph.ProMJGraphVisualizer;
@@ -35,9 +35,13 @@ import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improved
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPData;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPSocialTransformation;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPTransformation;
+import org.processmining.plugins.heuristicsnet.miner.heuristics.miner.HeuristicsMiner;
+import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization.AnnotatedVisualizationGenerator;
+import org.processmining.plugins.heuristicsnet.visualizer.annotatedvisualization.AnnotatedVisualizationSettings;
 import org.processmining.plugins.socialnetwork.miner.miningoperation.UtilOperation;
 
 import com.fluxicon.slickerbox.components.SlickerButton;
+import com.fluxicon.slickerbox.ui.SlickerCheckBoxUI;
 
 
 public class OLAPDiscoveryPanel extends JComponent  {
@@ -52,9 +56,9 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	private OLAPData DiscoveryData;
 	private  ProMJGraphPanel ModelPanel;
 	//private ImproveDiscoveryModelPanel ModelPanel;
-	private OLAPDiscoveryParametersPanel ParametersPanel;
+	protected OLAPDiscoveryParametersPanel ParametersPanel;
 	private PluginContext context;
-	private ProMJGraphPanel comparator_panel;
+	private ProMJGraphPanel HeuristicComparatorVersion;
 	//private SocialNetworkAnalysisUI SNPanel;
 	private CustomSocialNetworkAnalysisUI SNPanel;
 	private CustomSocialNetworkAnalysisUI WorkingSNPanel;
@@ -66,7 +70,6 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	private int HeuristicViewWidth=1020;
 	private int HeuristicViewHeigth=350;
 	private int HeuristicViewDistance=250;
-	private JFrame frame;
 	private int SocialViewWidth=450;
 	private int SocialViewHeigth=570;
 	private int SocialViewDistance=470;
@@ -75,7 +78,9 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	private ProgressMonitor progressMonitor;
 	private boolean finishClusterUpdate=false;
 	private  JPanel ButtonPanel;
-	
+	private ClusterSwingWorker clusterSwingWorker;
+	private JLabel LogWarning;
+	private boolean showAlwaysOriginalProcess=false;
 	public OLAPDiscoveryPanel(final ProMJGraph jgraph,
 			final OLAPTransformation Transformation,final PluginContext context) {
 
@@ -85,8 +90,8 @@ public class OLAPDiscoveryPanel extends JComponent  {
 		 this.Transformation=Transformation;
 		 this.context=context;
 		 this.DiscoveryData=Transformation.GetData();
-         CreateBaseSocialPanel();		 
-		 CreateHeuristicModel();	    
+         CreateBaseSocialPanel(DiscoveryData.getSocialNetwork());		 
+		 CreateHeuristicModel(DiscoveryData.getHeuristicsNetGraph());	    
 	    // ModelPanel= new ImproveDiscoveryModelPanel(jgraph,this.DiscoveryData.getHeuristicNet(),this.DiscoveryData.getHMinerAVSettings()); 
 	     ParametersPanel= new OLAPDiscoveryParametersPanel(Transformation,
 	    		 											  this.AddSocialTabEvents(),
@@ -101,11 +106,18 @@ public class OLAPDiscoveryPanel extends JComponent  {
          CreateButtonPanel();
          this.add(ButtonPanel);
          Transformation.SetXLogBackUpUnit();
+         clusterSwingWorker= new ClusterSwingWorker(Transformation,this);
+         LogWarning=new JLabel("There are not enough traces, press Reset");
+         
    }
 	
-	public void CreateBaseSocialPanel()
+	public  JLabel GetLogWarning()
 	{
-		 this.SNPanel=new  CustomSocialNetworkAnalysisUI(context,DiscoveryData.getSocialNetwork());	 
+		return LogWarning;
+	}
+	public void CreateBaseSocialPanel(SocialNetwork sn)
+	{
+		 this.SNPanel=new  CustomSocialNetworkAnalysisUI(context,sn);	 
 		 this.SNPanel.setSize(new Dimension(450,570));
 		 this.SNPanel.setBounds(20, 20, 450,570);
 		 this.SNPanel.setBorder(BorderFactory.createLineBorder(Color.black));
@@ -115,17 +127,59 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	{
         ButtonPanel= new JPanel();
 
-        ButtonPanel.setSize(new Dimension(350,50));		 
-        ButtonPanel.setBounds(1020, 0, 350,50);
+        ButtonPanel.setSize(new Dimension(350,60));		 
+        ButtonPanel.setBounds(1020, 0, 350,60);
         ButtonPanel.setBackground(new Color(100,100,100));
 		 ButtonPanel.repaint();
 	     ButtonPanel.add(ResourceBotton());
         ButtonPanel.add(ResetButton());
         ButtonPanel.add(FullScreen());
+        
+        JCheckBox j= new JCheckBox("Kept always the original model");
+        j.setSelected(false);
+        j.setOpaque(false);
+        j.setUI(new SlickerCheckBoxUI());
+        j.addMouseListener(new MouseListener(){
+
+			public void mouseClicked(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseEntered(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseExited(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mousePressed(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				JCheckBox check=(JCheckBox) arg0.getComponent();
+				if(check.isSelected())
+				{
+				showAlwaysOriginalProcess=false;
+				UpdateSNPanel();
+				}
+				else
+				{
+					showAlwaysOriginalProcess=true;
+					GetOriginalViews();
+				}	
+			}
+
+			public void mouseReleased(MouseEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}});
+        ButtonPanel.add(j);
 	}
-	public void CreateHeuristicModel()
+	public void CreateHeuristicModel(HeuristicsNetGraph HN)
 	{
-		 ModelPanel=ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(DiscoveryData.getHeuristicsNetGraph());
+		 ModelPanel=ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(HN);
 		 ModelPanel.remove(ModelPanel.getComponent(1));
 		 ModelPanel.remove(ModelPanel.getComponent(1));
 		 ModelPanel.remove(ModelPanel.getComponent(3));
@@ -187,20 +241,7 @@ public class OLAPDiscoveryPanel extends JComponent  {
 		return detailButton;
 	}
 	
-	public SlickerButton ChangeViewAnalysistMode()
-	{
-		final SlickerButton detailButton = new SlickerButton();
-		detailButton.setToolTipText("click to view without compare");
-		detailButton.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-		detailButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-		detailButton.setMinimumSize(new Dimension(55, 55));
-		detailButton.setSize(new Dimension(55,55));
-		detailButton.setBounds(960,140 , 55,55);	 
-		detailButton.setText("Not \n Compare");
-		detailButton.setBackground(Color.BLUE);
-		detailButton.setFont(new Font("10f", 11, 9));
-		return detailButton;
-	}
+
 	public  SlickerButton ResetButton()
 	{
 		final SlickerButton detailButton = new SlickerButton();
@@ -231,17 +272,48 @@ public class OLAPDiscoveryPanel extends JComponent  {
 				   ParametersPanel.mainPerformanceContainer.repaint();
 				   ParametersPanel.repaint();
 				
-				   ParametersPanel.tabPane.selectTab("Organizational");
+				  // ParametersPanel.tabPane.selectTab("Organizational");
 				   ParametersPanel.tabPane.selectTab("Performance");
 				   
                    AddPerformanceClickAction();
-               //Remove comparative view
+                 //Remove comparative view
                    RemoveComparativeView();
+       			   currentSocialAnalysist="Working Together";
+                   ResetAuxiliarSocialNet();
+                   UpdateSNPanel();
                    BuiltGraph();
 			}});
 
 		
 		return detailButton;
+	}
+	
+	public void ResetAuxiliarSocialNet()
+	{
+		if(currentSocialAnalysist.equals("Similar Task"))
+		{
+		
+
+			currentSocialAnalysist="Similar Task";
+			Transformation.GetSocialTransformation().RecalculateSocialRelations("ST",0);
+			Transformation.GetSocialTransformation().SearchGroups(Transformation.GetSocialTransformation(). GetMatrix2D("ST"));
+		}
+		else if(currentSocialAnalysist.equals("Working Together"))
+		{
+			currentSocialAnalysist="Working Together";
+			Transformation.GetSocialTransformation().RecalculateSocialRelations("WT",0);
+			Transformation.GetSocialTransformation().SearchGroups(Transformation.GetSocialTransformation(). GetMatrix2D("WT"));
+	
+			//Transformation.GetSocialTransformation().WTCalculation();				 						  
+		}
+		else
+		{
+			currentSocialAnalysist="Handover of Work";
+			Transformation.GetSocialTransformation().RecalculateSocialRelations("HW",0);
+			Transformation.GetSocialTransformation().SearchGroups(Transformation.GetSocialTransformation(). GetMatrix2D("HW"));
+	
+			//Transformation.GetSocialTransformation().HWCalculation();	
+		}
 	}
 	public void repaintThis()
 	{
@@ -260,7 +332,8 @@ public class OLAPDiscoveryPanel extends JComponent  {
 
 			public void actionPerformed(ActionEvent arg0) {		
 				
-				   UpdateBaseLog();					  
+				   UpdateBaseLog();			
+				   
 				    Transformation.SetSocialTransformation(
 				    		new OLAPSocialTransformation(Transformation.GetData()));
 					Transformation.GetSocialTransformation().WTCalculation();				 
@@ -269,6 +342,8 @@ public class OLAPDiscoveryPanel extends JComponent  {
 				   ParametersPanel.tabPane.repaint();
                    AddSocialCheckEvents();
                    Transformation.SetXLogBackUpUnit();
+                   ParametersPanel.mainSocialParameters.Options.getItemAt(0);
+                   UpdateSNPanel();//="Working Together");
 
 			}
     		};
@@ -287,7 +362,8 @@ public class OLAPDiscoveryPanel extends JComponent  {
 				   ParametersPanel.mainPerformanceContainer.ResetPanel();
 				   ParametersPanel.mainPerformanceContainer.repaint();
 				   ParametersPanel.tabPane.repaint();
-                   AddPerformanceClickAction();
+				   UpdateSNPanel();
+				   AddPerformanceClickAction();
                  
 			}
     		};
@@ -302,16 +378,27 @@ public class OLAPDiscoveryPanel extends JComponent  {
 		
 		ActionListener Action= new     		ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				   UpdateBaseLog();
-				   Transformation.GetClusterTransformation().GetClusterData().SetMainLog(Transformation.GetData().GetCurrentLog());
-				   // Transformation.GetClusterTransformation()SetClusterData(
-				  // new ImproveDiscoveryClusterData(Transformation.GetData().GetCurrentLog(), 1));
-				   //ShowAdviceFrame();
+			
+				    UpdateBaseLog();
+				    Transformation.GetClusterTransformation().GetClusterData().SetMainLog(Transformation.GetData().GetCurrentLog());
 					ParametersPanel.mainClusterParameters.CleanPanels();
-				    ShowAdviceFrame();
-				   ClusterSwingWorker();
-				   //UpdateClusterParameters();
-
+					
+					if(Transformation.GetData().GetCurrentLog().size()>3)
+					{
+					ParametersPanel.mainClusterParameters.remove(LogWarning);
+					clusterSwingWorker.ShowAdviceFrame("Cluster calculation","This plugin is recalculating the clusters");
+					clusterSwingWorker.LoadClusterSwingWorker();
+					AddClusterCheckEvents();
+					AddSubClusterEvents();
+					AddLabelsEvent();
+					}
+					else
+					{
+						ParametersPanel.mainClusterParameters.add(LogWarning);
+					}
+					UpdateSNPanel();
+					//UpdateClusterParameters();
+					
 			}
 			
 		};
@@ -327,9 +414,9 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	
 	public void RemoveComparativeView()
 	{
-		if(Arrays.asList(this.getComponents()).contains(comparator_panel))
+		if(Arrays.asList(this.getComponents()).contains(HeuristicComparatorVersion))
 		{
-		this.remove(comparator_panel);	
+		this.remove(HeuristicComparatorVersion);	
 		}
 		if(Arrays.asList(this.getComponents()).contains(this.WorkingSNPanel))
 		{
@@ -362,6 +449,9 @@ public class OLAPDiscoveryPanel extends JComponent  {
 				{
 					IsHeuristicAnalysis=false;
 					detailButton.setText("Process");
+					
+					SocialPanelData(currentSocialAnalysist);
+					CreateSocialWorkingView();
 					RemoveHeuristicPanel();
                     AddSocialPanel();
 
@@ -375,6 +465,7 @@ public class OLAPDiscoveryPanel extends JComponent  {
 					AddHeuristic();
 			
 				}
+				UpdateSNPanel();
 			}});
 
 		return detailButton;
@@ -384,8 +475,8 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	public void AddHeuristic()
 	{
 		this.Transformation.GenerateHeuristicModel();
-		if(this.comparator_panel!=null)
-		this.add(comparator_panel);
+		if(this.HeuristicComparatorVersion!=null)
+		this.add(HeuristicComparatorVersion);
 
 		if(!this.LargeView)
 		this.add(this.ModelPanel);
@@ -466,8 +557,8 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	  
 	  this.remove(this.ModelPanel);
 	  
-	  if(this.comparator_panel!=null)
-	  this.remove(this.comparator_panel);
+	  if(this.HeuristicComparatorVersion!=null)
+	  this.remove(this.HeuristicComparatorVersion);
 	  
 	  this.revalidate();
 	  this.repaint();
@@ -506,6 +597,8 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	
 	public void LabelMouseListenerAction(JLabel label)
 	{
+		System.out.print("\n Label:"+ label.getName());
+
 		label.addMouseListener(new MouseListener(){
 
 			public void mouseClicked(MouseEvent arg0){
@@ -516,17 +609,20 @@ public class OLAPDiscoveryPanel extends JComponent  {
 				JLabel label= (JLabel) arg0.getComponent();
 				
 				value= Integer.parseInt(label.getName());
-	
-				if(label.getText().equals("-"))
+
+				if(label.getText().equals("-") && !ParametersPanel.mainClusterParameters.eventClusterCaseAssign.get(""+value))
 				{
 						if(Transformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(value)<15)
 							
 						{
 							
 						   Map<String,JCheckBox> MapCase=ParametersPanel.mainClusterParameters.ClustersCasesCheckBoxes;
+
 						   for(int c=0;c<Transformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(value);c++)
 						   {        
+
 							   key=value+"-"+c;
+							   System.out.print("\n evento for: "+value+"-"+c);
 							   MapCase.get(key).addMouseListener(new MouseListener(){
 								   
 								public void mouseClicked(MouseEvent e) {}
@@ -564,6 +660,9 @@ public class OLAPDiscoveryPanel extends JComponent  {
 						else
 						{
 						}
+						
+						ParametersPanel.mainClusterParameters.eventClusterCaseAssign.remove(""+value);
+				 		ParametersPanel.mainClusterParameters.eventClusterCaseAssign.put(""+value,true);
 				}
 				else
 				{
@@ -589,15 +688,17 @@ public class OLAPDiscoveryPanel extends JComponent  {
 				int value= -1;
 				String key="";
 				JLabel label= (JLabel) arg0.getComponent();		
-			    value=Integer.parseInt(label.getName().substring(0,label.getName().indexOf("-")));
+			    value=Integer.parseInt(label.getName());
 
-				if(label.getText().equals("-"))
+				if(label.getText().equals("-") && !ParametersPanel.mainClusterParameters.eventClusterCaseAssign.get(""+value))
 				{
 									
 						   Map<String,JCheckBox> MapCase=ParametersPanel.mainClusterParameters.ClustersCasesCheckBoxes;
 						   for(int c=0;c<Transformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(value);c++)
 						   {        
 							   key=value+"-"+c;
+							   System.out.print("\n evento for: "+value+"-"+c);
+
 							   MapCase.get(key).addMouseListener(new MouseListener(){
 	
 								public void mouseClicked(MouseEvent e) {}
@@ -626,7 +727,10 @@ public class OLAPDiscoveryPanel extends JComponent  {
 						
 							   });
 						   }
-					}
+							ParametersPanel.mainClusterParameters.eventClusterCaseAssign.remove(""+value);
+					 		ParametersPanel.mainClusterParameters.eventClusterCaseAssign.put(""+value,true);
+
+				}
 			}
 
 			public void mouseEntered(MouseEvent arg0) {}
@@ -642,15 +746,22 @@ public class OLAPDiscoveryPanel extends JComponent  {
  		JLabel label;
 		for(int j=0;j<ParametersPanel.mainClusterParameters.JLabelClusterArray.size();j++)
 	 	{
+
 	 		label=ParametersPanel.mainClusterParameters.JLabelClusterArray.get(j);
 	 	    LabelMouseListenerAction(label);
+	 		LabelMouseListenerSubCluster(label);
+	 
 	 	}
 		
+		/*
 		for(int c=0;c<ParametersPanel.mainClusterParameters.JLabelSubClusterArray.size();c++)
 		{
+
 	 		label=ParametersPanel.mainClusterParameters.JLabelSubClusterArray.get(c);
 	 		LabelMouseListenerSubCluster(label);
 		}
+		*/
+		
 	}
 	
 	
@@ -902,42 +1013,29 @@ public class OLAPDiscoveryPanel extends JComponent  {
 				BuiltGraph();
 			}
     	});
-	 	
-	 	AddClusterCheckEvents();
-		AddSubClusterEvents();
-	 	AddLabelsEvent();
-		
 
 	}
 	
+
 	public void basicSocialEvents()
 	{
 		ParametersPanel.mainSocialParameters.Options.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				
 				JComboBox combo= ParametersPanel.mainSocialParameters.Options;
-				  Transformation.SetSocialTransformation(
-						    new OLAPSocialTransformation(Transformation.GetData()));
-				if(combo.getSelectedItem().toString().equals("Similar Task"))
-				{
-					currentSocialAnalysist="Similar Task";
-					Transformation.GetSocialTransformation().STCalculation();			 
-				}
-				else if(combo.getSelectedItem().toString().equals("Working Together"))
-				{
-					currentSocialAnalysist="Working Together";
-					Transformation.GetSocialTransformation().WTCalculation();				 						  
-				}
-	
-			       ParametersPanel.mainSocialParameters.ResetPanel();
-				   ParametersPanel.mainSocialParameters.repaint();
-				   ParametersPanel.tabPane.selectTab("Performance");
-				   ParametersPanel.tabPane.selectTab("Organizational");
+				Transformation.ResetResourceFilter();
 
+				Transformation.SetSocialTransformation( new OLAPSocialTransformation(Transformation.GetData()));
+				currentSocialAnalysist=combo.getSelectedItem().toString();
+				ResetAuxiliarSocialNet();
+				ParametersPanel.mainSocialParameters.ResetPanel();
+				ParametersPanel.mainSocialParameters.repaint();
+		
 				   AddSocialCheckEvents();
 				   BuiltGraph();
 			}});
 	}
+	
 	public void AddCheckBoxesEvent()
     {
 	
@@ -973,31 +1071,30 @@ public class OLAPDiscoveryPanel extends JComponent  {
     
     public void redrawGraphWithSubCluster(int cluster, int trace_ini,int trace_last,boolean remove)
     {
-    	if(remove)
+    	
+    	if(remove) 
 		{
-    		Transformation.RemoveTracesFromSubCluster(cluster,trace_ini,trace_last);
+    		clusterSwingWorker.RemoveSubClusterFilteringSwingWorker(cluster,trace_ini,trace_last);   	    	
     	}
     	else
     	{
-    		Transformation.RestoreSubCluster(cluster,trace_ini,trace_last);
+    		clusterSwingWorker.AddSubClusterFilteringSwingWorker(cluster,trace_ini,trace_last);
     	}
-    	
-    	
-		BuiltGraph();
 
     }
    
     public void redrawGraphWithTraces(int cluster,int trace,boolean remove)
     {
+
 		if(remove)
 		{
-			Transformation.RemoveTraceAndFilter(trace,cluster);
+			clusterSwingWorker.RemoveCaseFilteringSwingWorker(trace,cluster);
+		
 		}
 		else
 		{
-			Transformation.RestoreCase(cluster,trace);
+			clusterSwingWorker.RestoreCaseFilteringSwingWorker(cluster,trace);
 		}
-		BuiltGraph();
 
     }
 	
@@ -1005,44 +1102,44 @@ public class OLAPDiscoveryPanel extends JComponent  {
     {
 		if(remove)
 		{
-             Transformation.GroupFilter(numberGroup);
+             Transformation.GroupFilter(numberGroup,currentSocialAnalysist);
             
 		}
 		else
 		{
-		    Transformation.RestoreGroup(numberGroup);	
+		    Transformation.RestoreGroup(numberGroup,currentSocialAnalysist);	
 		}
 		BuiltGraph();
     }
     
     public void redrawGraphWithClusters(String number,boolean remove)
 	{
-		Transformation.setContext(context);
 		
-
 		if(remove)
 		{
-             Transformation.RemoveClusterAndFilter(number);
-            
+			
+			clusterSwingWorker.RemoveClusterFilteringSwingWorker(number);
 		}
 		else
 		{
-		    Transformation.RestoreCluster(number);	
+			clusterSwingWorker.RestoreClusterFilteringSwingWorker(number);
+		    //Transformation.RestoreCluster(number);	
 		}
-		BuiltGraph();
+		//BuiltGraph();
 	}
 	
 	public void BuiltGraph()
 	{
+		System.out.print("\n built graph");
 		if(IsHeuristicAnalysis)
 		{
-						if (comparator_panel!= null) {
-							this.remove(comparator_panel);
-							comparator_panel = null;
+						if (HeuristicComparatorVersion!= null) {
+							this.remove(HeuristicComparatorVersion);
+							HeuristicComparatorVersion = null;
 							this.revalidate();
 				
 						} 
-						if (comparator_panel == null) {
+						if (HeuristicComparatorVersion == null) {
 								
 						    if(Transformation.GetFixCase())
 						    {
@@ -1052,33 +1149,28 @@ public class OLAPDiscoveryPanel extends JComponent  {
 								this.DiscoveryData.getHeuristicsNetGraph().removeActivity(ac);  
 						
 							}
-							    comparator_panel=ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(DiscoveryData.getHeuristicsNetGraph());
+							    HeuristicComparatorVersion=ProMJGraphVisualizer.instance().visualizeGraphWithoutRememberingLayout(DiscoveryData.getHeuristicsNetGraph());
 							    
-							    comparator_panel.remove(comparator_panel.getComponent(1));
-							    comparator_panel.remove(comparator_panel.getComponent(1));
-							    comparator_panel.getComponent(0).repaint();
-							    comparator_panel.repaint();
-							    comparator_panel.setAutoscrolls(false);
-								comparator_panel.setBounds(0, this.HeuristicViewDistance,this.HeuristicViewWidth ,this.HeuristicViewHeigth);
-								comparator_panel.setSize(new Dimension(this.HeuristicViewWidth ,this.HeuristicViewHeigth));
-								comparator_panel.setPreferredSize(new Dimension(this.HeuristicViewWidth ,this.HeuristicViewHeigth));
+							    HeuristicComparatorVersion.remove(HeuristicComparatorVersion.getComponent(1));
+							    HeuristicComparatorVersion.remove(HeuristicComparatorVersion.getComponent(1));
+							    HeuristicComparatorVersion.getComponent(0).repaint();
+							    HeuristicComparatorVersion.repaint();
+							    HeuristicComparatorVersion.setAutoscrolls(false);
+								HeuristicComparatorVersion.setBounds(0, this.HeuristicViewDistance,this.HeuristicViewWidth ,this.HeuristicViewHeigth);
+								HeuristicComparatorVersion.setSize(new Dimension(this.HeuristicViewWidth ,this.HeuristicViewHeigth));
+								HeuristicComparatorVersion.setPreferredSize(new Dimension(this.HeuristicViewWidth ,this.HeuristicViewHeigth));
 							    
-								this.add(comparator_panel);
+								this.add(HeuristicComparatorVersion);
 								this.revalidate();	
 						        
 								
 						}
 						
-						//update working panel
-						SocialPanelData("Working Together");
-						this.CreateSocialWorkingView();
-					
-						
 		}
 		//Social view
 		else
 		{
-			SocialPanelData("Working Together");
+			SocialPanelData(this.currentSocialAnalysist);
 
 			if(WorkingSNPanel!=null)
 			{
@@ -1093,7 +1185,6 @@ public class OLAPDiscoveryPanel extends JComponent  {
 			this.repaint();
 			this.revalidate();
 			
-			System.out.print("\n resource");
 
 		}
 	}
@@ -1112,12 +1203,12 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	
 		if(remove)
 		{
-             Transformation.SocialFilter(id);
+             Transformation.SocialFilter(id,currentSocialAnalysist);
              
  	    }
 		else
 		{
-			Transformation.AddSocialResource(id);
+			Transformation.AddSocialResource(id,currentSocialAnalysist);
 		}
 		BuiltGraph();
 	}
@@ -1140,7 +1231,9 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	}
 	
 	public void SocialPanelData(String type)
-	{
+	{		
+
+	
 		if(type.equals("Working Together"))
 		{
 				DiscoveryData.SetSocialNetwork(UtilOperation.generateSN(
@@ -1157,133 +1250,77 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	
 		
 		}
-		 
-		
+		else
+		{
 
+			DiscoveryData.SetSocialNetwork(UtilOperation.generateSN(
+					Transformation.GetSocialTransformation().GetMatrix2DToShow("HW"), 
+					Transformation.GetSocialTransformation().GetHandoverWTaskDataToShow().getOriginatorList()));
+			
+		}
+		UpdateSNPanel();
 	}
 
+	public void UpdateSNPanel()
+	{
+		if(!showAlwaysOriginalProcess)
+		{
+    	if(!IsHeuristicAnalysis && !LargeView)
+		{	
+			if(WorkingSNPanel!=null)
+    		remove(WorkingSNPanel);
+			
+    		remove(SNPanel);
+		    CreateBaseSocialPanel(Transformation.GetSocialTransformation().GenerateBaseSocialNetwork(this.currentSocialAnalysist, Transformation.GetData().GetBaseLog()));
+    		add(SNPanel);
+		}
+		else if(!LargeView)
+		{
+			if(HeuristicComparatorVersion!=null)
+			remove(HeuristicComparatorVersion);
+			
+			remove(ModelPanel);
+			CreateHeuristicModel(DiscoveryData.getHeuristicsNetGraph());	    
+			add(ModelPanel);
 
+		}
+		repaint();		
+		}
+	}
 	
-	  public void ShowAdviceFrame()
-	    {
-		  ParametersPanel.mainClusterParameters.CleanPanels();
+	public void GetOriginalViews()
+	{
+    	if(!IsHeuristicAnalysis)
+		{	
+    		remove(SNPanel);
+		    CreateBaseSocialPanel(Transformation.GetSocialTransformation().GenerateBaseSocialNetwork(currentSocialAnalysist,this.Transformation.GetData().GetOriginalLog()));
+	    	if(!LargeView)
+	    	{
+	    		add(SNPanel);
+	    	}
+		}
+		else
+		{
+			  remove(ModelPanel);
+			  XLogInfo Info=XLogInfoFactory.createLogInfo(Transformation.GetData().GetOriginalLog());
 
-
-			frame = new JFrame("Cluster calculation");
+			  HeuristicsMiner fhm = new HeuristicsMiner(context,Transformation.GetData().GetOriginalLog(),Info ); 
+			  HeuristicsNet net=fhm.mine(); 
+			  AnnotatedVisualizationSettings AVS= new AnnotatedVisualizationSettings();
+			  AnnotatedVisualizationGenerator generator = new AnnotatedVisualizationGenerator();
+			  HeuristicsNetGraph HM= generator.generate(net,AVS);
 		
-			porcentaje= new JLabel("0 %");
-			porcentaje.setFont(new Font("20f", 20, 20));
-			porcentaje.setHorizontalAlignment(JLabel.CENTER);
-			porcentaje.setHorizontalTextPosition(JLabel.CENTER);
-			porcentaje.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+			CreateHeuristicModel(HM);	    
 			
-			JLabel title=new JLabel("This plugin is recalculating the clusters");
-			title.setFont(new Font("15f", 15, 20));
+	    	if(!LargeView)
+	    	{
+	    		add(ModelPanel);
+	    	}
 
-			JLabel message=new JLabel("Wait Please");
-			message.setFont(new Font("15f", 15, 20));
-			message.setHorizontalAlignment(JLabel.CENTER);
-			message.setHorizontalTextPosition(JLabel.CENTER);
-			message.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-			
-			JPanel panel= new JPanel();
-			panel.setLayout(new BorderLayout());
-			
+		}
 
-			
-			panel.add(title,BorderLayout.NORTH);
-			panel.add(message,BorderLayout.CENTER);
-			panel.add(porcentaje,BorderLayout.SOUTH);
-			
-			frame.getContentPane().add(panel);
-			frame.setBounds(900, 300, 100, 100);
-
-			//4. Size the frame.
-			frame.pack();
-
-			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-			frame.setVisible(true);
-			
-	 
-			
-	    }
-	 
-	public void  ClusterSwingWorker()
-	    {
-	    	
-	    
-		SwingWorker<Boolean, Integer> worker = new SwingWorker<Boolean, Integer>() {
-			
-			@Override
-			protected Boolean doInBackground() throws InterruptedException {
-				   publish(1);
-				   Transformation.GetClusterTransformation().Step1();
-			       publish(40);
-			       Transformation.GetClusterTransformation().Step2();
-			       publish(50);
-			       Transformation.GetClusterTransformation().Step3();
-			       publish(60);
-			       Transformation.GetClusterTransformation().Step4();
-			       publish(70);
-			       Transformation.GetClusterTransformation().Step5();
-			       publish(80);
-
-
-				   System.out.print("\n Update");
-					Thread.sleep(1000);
-					publish(0);
-				    publish(100);
-
-					     return true;
-	        }	     
-	     
-			protected void done() {
-			    
-			try {
-				
-	             boolean status= get();
-				if(status)
-				{
-				// Retrieve the return value of doInBackground.
-					   ParametersPanel.mainClusterParameters. AddHeader();
-				 	   ParametersPanel.mainClusterParameters.ClustersParameters();
-					   AddClusterCheckEvents();		
-					   AddCheckBoxesClusterEvents();
-				       repaint();
-				   
-				   
-					   ParametersPanel.mainClusterParameters.repaint();
-					   ParametersPanel.tabPane.repaint();
-					   ParametersPanel.repaint();
-					   revalidate();
-					   repaint();
-		           System.out.print("\n done");
-		           frame.dispose();
-		         
-		         //frame.dispose();
-				}
-			} catch (InterruptedException e) {
-			     // This is thrown if the thread's interrupted.
-			    } catch (ExecutionException e) {
-			     // This is thrown if we throw an exception
-			     // from doInBackground.
-			    }
-			   }
-
-			   @Override
-			   protected void process(List<Integer> chunks) {
-			     //progressMonitor.setNote("Finish");
-				   int mostRecentValue = chunks.get(chunks.size()-1);
-
-				    porcentaje.setText(mostRecentValue+"%");
-					   
-					
-			   }
-			   
-		};
-		worker.execute();
-	    }
-
+    	revalidate();
+		repaint();				
+	}
 
 }

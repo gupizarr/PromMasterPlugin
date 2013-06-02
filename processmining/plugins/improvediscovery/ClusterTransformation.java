@@ -200,23 +200,9 @@ public class ClusterTransformation {
 
 	}
 	
+ 
     public void Filtered()
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-	{
+    {
 		if (ClusterData.GetUnionFeatureSet() == null) {
 			ClusterData.SetUnionFeatureSet(new HashSet<String>());
 		}

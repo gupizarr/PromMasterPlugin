@@ -58,9 +58,13 @@ public class OLAPData {
 
   }
   
+  public XLog GetOriginalLog()
+  {
+	  return log;
+  }
   public void InicializatePerformanceData()
   {
-		this.PerformanceData= new PerformanceData(this.transformLog);
+		this.PerformanceData= new PerformanceData(this.GetBaseLog());
 
   }
   

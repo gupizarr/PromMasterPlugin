@@ -4,9 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.text.DecimalFormat;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -20,7 +20,6 @@ import javax.swing.JSlider;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPData;
 import org.processmining.plugins.PromMasterPlugin.processmining.plugins.improvediscovery.OLAPTransformation;
 
-import com.fluxicon.slickerbox.ui.SlickerCheckBoxUI;
 import com.fluxicon.slickerbox.ui.SlickerSliderUI;
 
 
@@ -157,7 +156,6 @@ public class PerformanceParameters extends JPanel {
 				
 				if(!pressed)
 				{
-				System.out.print("\n mouse pressed");
 				maxTimeSlider.setMinimum(minTimeSlider.getValue());
 				
 				if(multiTime)
@@ -177,7 +175,6 @@ public class PerformanceParameters extends JPanel {
 			public void mouseClicked(MouseEvent arg0) {
 				// TODO Auto-generated method stub
 				
-				System.out.print("\n mouse click");			
 					maxTimeSlider.setMinimum(minTimeSlider.getValue());
 					if(multiTime)
 					{
@@ -273,7 +270,6 @@ public class PerformanceParameters extends JPanel {
 		maxTimeSlider.setToolTipText("<html>" +
 						"Select the minimum time of the traces for filtering.</html>");
 		
-		
 		parametersPerformancePanel.add(packVerticallyCentered(maxSliderHeader, 120, 40), BorderLayout.NORTH);
 		parametersPerformancePanel.add(maxTimeSlider, BorderLayout.CENTER);
 		parametersPerformancePanel.add(packVerticallyCentered(maxTimeLabel, 120, 20), BorderLayout.SOUTH);
@@ -285,6 +281,19 @@ public class PerformanceParameters extends JPanel {
 		downSettingsPanel.setOpaque(false);
 		downSettingsPanel.setLayout(new BoxLayout(downSettingsPanel, BoxLayout.Y_AXIS));
 		
+		//mean and standart deviation
+		
+		DecimalFormat df = new DecimalFormat("#.##");
+	
+		
+		JLabel mean= new JLabel("Process mean duration:"+ df.format(Data.GetPerformanceData().getMean())+" days");
+		JLabel stan= new JLabel("Process standard deviation :"+df.format(Data.GetPerformanceData().getStandartD())+" days");
+		
+		downSettingsPanel.add(mean);
+		downSettingsPanel.add(stan);
+
+		
+		/*
 		meanPerformanceCheckBox = new JCheckBox("See the mean");
 		meanPerformanceCheckBox.setUI(new SlickerCheckBoxUI());
 		meanPerformanceCheckBox.setOpaque(false);
@@ -292,23 +301,59 @@ public class PerformanceParameters extends JPanel {
 		meanPerformanceCheckBox.setFont(this.smallFont);
 		//meanPerformanceCheckBox.addItemListener(this);
 		meanPerformanceCheckBox.setToolTipText("<html>See the mean</html>");
+		
+		meanPerformanceCheckBox.addMouseListener(new MouseListener(){
+
+			public void mouseClicked(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseEntered(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mouseExited(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			public void mousePressed(MouseEvent e) {
+				// TODO Auto-generated method stub
+				JCheckBox check=(JCheckBox) e.getComponent();
+				if(!check.isSelected())
+				{
+			     System.out.print("\n mean");
+			     DataTransformation.MeanFilter(minTimeSlider.getValue(),maxTimeSlider.getValue());
+				}
+				else
+				{
+				     System.out.print("\n not mean");
+
+				     DataTransformation.PerformanceFilter(minTimeSlider.getValue(),maxTimeSlider.getValue());
+
+				     
+				}
+			}
+
+			public void mouseReleased(MouseEvent e) {
+				// TODO Auto-generated method stub
+				
+			}});
 	
 	
 				downSettingsPanel.add(meanPerformanceCheckBox);
 	
-	    
+	    */
 				// assemble lower control panel
 				this.add(performanceHeaderPanel, BorderLayout.NORTH);
 				this.add(performanceParametersContainer, BorderLayout.CENTER);
 				this.add(downSettingsPanel, BorderLayout.SOUTH);
 				//end of the "Edge filter" panel
 	}
+
 	
-	public void itemStateChanged(ItemEvent evt) {
-		if (evt.getSource() == meanPerformanceCheckBox) {
-			System.out.print("Ver media");
-		}
-	}
 	
 
 	public String JLabelName(String ini, double time)
@@ -317,12 +362,10 @@ public class PerformanceParameters extends JPanel {
     	
     	if(multiTime)
     	{
-    		System.out.print("\n multi time es verdadero");
     		name=	ini+ " "+	editTime(time);
     	}
     	else	
     	{
-    		System.out.print("\n multi time falso");
 
     		name=   (int) time+" "+Data.GetPerformanceData().TagTime();
     	}
@@ -338,8 +381,7 @@ public class PerformanceParameters extends JPanel {
 		
 		double diff= max-min;
 		
-		System.out.print("\n min:"+min);
-		System.out.print("\n max:"+max);
+		
 
 		if(diff>10)
 				return false;
@@ -350,16 +392,13 @@ public class PerformanceParameters extends JPanel {
 	public double NormaliseTime(double time)
 	{
 		double ponderator=1;
-		System.out.print("\n time value"+time);
 
 		if(multiTime)
 		{
 	     ponderator=DataTransformation.GetData().GetPerformanceData().ponderator;
 		}
 		
-		System.out.print("\n ponderador:"+ponderator);
 		double value= time/ponderator;
-		System.out.print("\n final value"+value);
 
 		return  value;
 	}
@@ -458,12 +497,17 @@ public class PerformanceParameters extends JPanel {
 	
 	public void ResetPanel()
 	{
+		performanceHeaderPanel.removeAll();
 		this.remove(performanceHeaderPanel);
+		performanceParametersContainer.removeAll();
 		this.remove(performanceParametersContainer);
+		downSettingsPanel.removeAll();
 		this.remove(downSettingsPanel);
-		BuiltParameters();
-		this.repaint();
+		
+		//Data.InicializatePerformanceData();
 		multiTime=CompositionTime();
+		BuiltParameters();
+		
 
 	}
 

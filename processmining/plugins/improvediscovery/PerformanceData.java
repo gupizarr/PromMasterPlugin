@@ -22,10 +22,15 @@ public class PerformanceData {
 	  private double[] finalTime;
 	  private double[] sortedFinalTime;
 	  public int ponderator=0;
+	  private double mean=0;
+	  private double standartD;
+	  private StatisticsCalculator Calculator;
 	  
 	  public PerformanceData(XLog log) {
 		// TODO Auto-generated constructor stub
-		 this.transformLog=log;
+			Calculator= new  StatisticsCalculator();
+
+		  this.transformLog=log;
 	
 		 LogIni =new long[log.size()];
 		 LogFinish=new long[log.size()];
@@ -43,8 +48,26 @@ public class PerformanceData {
 		 {
 			 ContainTimes=false;
 		 }
+
 	  }
 	  
+	  public double getMean()
+	  {
+		  
+		  return mean;
+	  }
+	  
+	  public double getStandartD()
+	  {
+		
+		  return this.standartD;
+	  }
+	  public void CalculateData()
+	  {
+		  mean=  Calculator.getMean(this.finalTime);
+		  standartD= Calculator.getStdDev(this.finalTime);
+
+	  }
 	  public boolean IsInHours()
 	  {
 		    if(inDays && !inHours && !inMinutes)
@@ -53,7 +76,7 @@ public class PerformanceData {
 		    	return true;
 		    else 
 		    	return false;
-	  }
+	  }	
 	  
 	  public boolean IsInDays()
 	  {
@@ -200,7 +223,7 @@ public class PerformanceData {
 		    sortedFinalTime=finalTime.clone(); 
 		    Arrays.sort(sortedFinalTime);
 
-			 
+		    CalculateData();
 	  }
 	  
 	  public String TagTime()

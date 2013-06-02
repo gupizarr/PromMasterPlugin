@@ -169,7 +169,6 @@ public class HeuristicsMinerID {
 				lastEventIndex = eventIndex;
 				lastEvents.add(eventIndex);
 
-				//System.out.println(penultEventIndex+"\t"+lastEventIndex);
 			}
 
 			// 

@@ -35,7 +35,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 
 
 
-@Plugin(name = "ImproveDiscovery",
+@Plugin(name = "OLAPDiscovery",
         parameterLabels = { "Log", "Mother", "Procreation Configuration" },
         returnLabels = { "Model View" },
         returnTypes = { OLAPTransformation.class })

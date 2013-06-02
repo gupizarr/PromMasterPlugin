@@ -5,8 +5,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.deckfour.xes.model.XLog;
+import org.processmining.models.graphbased.directed.socialnetwork.SocialNetwork;
 import org.processmining.plugins.socialnetwork.miner.miningoperation.BasicOperation;
-import org.processmining.plugins.socialnetwork.miner.miningoperation.similartask.SimilartaskED;
+import org.processmining.plugins.socialnetwork.miner.miningoperation.UtilOperation;
+import org.processmining.plugins.socialnetwork.miner.miningoperation.handover.HandoverCCCDCM;
+import org.processmining.plugins.socialnetwork.miner.miningoperation.similartask.SimilartaskCC;
 import org.processmining.plugins.socialnetwork.miner.miningoperation.workingtogether.WorkingtogetherSAR;
 
 import cern.colt.matrix.DoubleMatrix2D;
@@ -19,11 +23,17 @@ public class OLAPSocialTransformation {
 	protected WorkingtogetherSAR WorkingTogetherDataToShow;
 	protected DoubleMatrix2D WorkingTogetherMatrixToShow;
 	
-	protected SimilartaskED SimilarTaskData;
+	protected SimilartaskCC SimilarTaskData;
 	protected DoubleMatrix2D SimilarTaskMatrix;
 
-	protected SimilartaskED SimilarTaskDataToShow;
+	protected SimilartaskCC SimilarTaskDataToShow;
 	protected DoubleMatrix2D SimilarTaskMatrixToShow;
+	
+	protected HandoverCCCDCM HandoverWTaskData;
+	protected DoubleMatrix2D  HandoverWTaskMatrix;
+
+	protected HandoverCCCDCM HandoverWTaskDataToShow;
+	protected DoubleMatrix2D  HandoverWTaskMatrixToShow;
 	
 	
 	protected Map<String,SocialRelation> Relations=new HashMap<String,SocialRelation>();
@@ -35,14 +45,24 @@ public class OLAPSocialTransformation {
 	public OLAPSocialTransformation(OLAPData Data) {
 		// TODO Auto-generated constructor stub
 		WorkingTogetherData= new  WorkingtogetherSAR(Data.GetBaseLog());
-		WorkingTogetherDataToShow= new  WorkingtogetherSAR(Data.GetWorkingLog());
-		SimilarTaskData = new SimilartaskED(Data.GetBaseLog());
-		SimilarTaskDataToShow= new SimilartaskED(Data.GetBaseLog());
+		WorkingTogetherDataToShow= new  WorkingtogetherSAR(Data.GetBaseLog());
 		
+		SimilarTaskData = new SimilartaskCC(Data.GetBaseLog());
+		SimilarTaskDataToShow= new SimilartaskCC(Data.GetBaseLog());
+		
+		HandoverWTaskData =new HandoverCCCDCM(Data.GetBaseLog());
+		HandoverWTaskDataToShow=new HandoverCCCDCM(Data.GetBaseLog());
 		this.Data=Data;
 	}
 	
-	public SimilartaskED GetSimilarTaskDataToShow()
+	public HandoverCCCDCM GetHandoverWTaskDataToShow()
+	{
+		
+			
+		return HandoverWTaskDataToShow;	
+	}
+	
+	public SimilartaskCC GetSimilarTaskDataToShow()
 	{
 		return  this.SimilarTaskDataToShow;
 	}
@@ -52,16 +72,23 @@ public class OLAPSocialTransformation {
 		return  WorkingTogetherDataToShow;
 	}
 	
-	public void SetSimilarTaskToShow()
+	public void SetHandoverWTaskToShow(XLog CurrentLog)
 	{
-		SimilarTaskDataToShow=new  SimilartaskED(Data.GetWorkingLog());
+		HandoverWTaskDataToShow=new  HandoverCCCDCM(CurrentLog);
+		HandoverWTaskMatrixToShow=HandoverWTaskDataToShow.calculation();
+		CleanMatrixToShow(HandoverWTaskMatrixToShow);		
+	}
+	
+	public void SetSimilarTaskToShow(XLog CurrentLog)
+	{
+		SimilarTaskDataToShow=new  SimilartaskCC(CurrentLog);
 		SimilarTaskMatrixToShow=SimilarTaskDataToShow.calculation();
 		CleanMatrixToShow(SimilarTaskMatrixToShow);		
 	}
 	
-	public void SetWorkingTogetherToShow()
+	public void SetWorkingTogetherToShow(XLog CurrentLog)
 	{
-		WorkingTogetherDataToShow=new  WorkingtogetherSAR(Data.GetWorkingLog());
+		WorkingTogetherDataToShow=new  WorkingtogetherSAR(CurrentLog);
 		WorkingTogetherMatrixToShow=WorkingTogetherDataToShow.calculation();
 		CleanMatrixToShow(WorkingTogetherMatrixToShow);
 
@@ -74,7 +101,7 @@ public class OLAPSocialTransformation {
 		else if(MatrixName.equals("ST"))
 		return SimilarTaskMatrixToShow;
 		else if(MatrixName.equals("HW"))
-		return null;
+		return HandoverWTaskMatrixToShow;
 		else
 		return null;
 	}
@@ -86,16 +113,47 @@ public class OLAPSocialTransformation {
 		else if(MatrixName.equals("ST"))
 		return SimilarTaskMatrix;
 		else if(MatrixName.equals("HW"))
-		return null;
+		return HandoverWTaskMatrix;
 		else
 		return null;
 	}
 	
 	
-	public int  getNumberOfWorkingTogTeam()
+	public int  getNumberOfTeam()
 	{
 		return Teams.size();
 	}
+
+	public void HWCalculation()
+	{
+		Relations.clear();
+		this.HandoverWTaskMatrixToShow= this.HandoverWTaskDataToShow.calculation();
+		this.HandoverWTaskMatrix= this.HandoverWTaskData.calculation();
+		String resource1="";
+		String resource2="";
+		double indicator=0;
+		
+		for(int k=0;k<HandoverWTaskMatrix.columns();k++)
+		{
+			for(int j=0;j<HandoverWTaskMatrix.rows();j++)
+			{
+				if(k!=j && !Relations.containsKey(k+"-"+j) && !Relations.containsKey(j+"-"+k) && HandoverWTaskMatrix.get(k,j)>0 && HandoverWTaskMatrix.get(j,k)>0)
+				{
+
+				   resource1=HandoverWTaskData.getOriginatorList().get(k);
+				   resource2=HandoverWTaskData.getOriginatorList().get(j);
+                   indicator= Math.rint(HandoverWTaskMatrix.get(k, j)*10)/10;
+                   SocialRelation SR= new SocialRelation(resource1,resource2,indicator);
+                   Relations.put(k+"-"+j, SR);
+
+				}
+			}
+
+		}
+		
+		SearchGroups(HandoverWTaskMatrix);
+	}
+	
 	
 	public void STCalculation()
 	{
@@ -218,7 +276,7 @@ public class OLAPSocialTransformation {
 		return GroupOfTwo;	
 	}
 	
-	public ArrayList<ArrayList<Integer>> GetTeamsWT()
+	public ArrayList<ArrayList<Integer>> GetTeams()
 	{
 		return Teams;
 	}
@@ -356,15 +414,22 @@ public class OLAPSocialTransformation {
 			WorkingTogetherData= new  WorkingtogetherSAR(Data.GetBaseLog());
 			WorkingTogetherMatrix=WorkingTogetherData.calculation();
 			ApplyValueThredhold(WorkingTogetherMatrix,WorkingTogetherData,Value);
-			SetWorkingTogetherToShow();
+			SetWorkingTogetherToShow(Data.GetBaseLog());
 
+		}
+		else if(Analysist.equals("HW"))
+		{
+		    this.HandoverWTaskData= new  HandoverCCCDCM(Data.GetBaseLog());
+		    HandoverWTaskMatrix=HandoverWTaskData.calculation();
+			ApplyValueThredhold(HandoverWTaskMatrix,this.HandoverWTaskData,Value);
+			this.SetHandoverWTaskToShow(Data.GetBaseLog());		
 		}
 		else
 		{
-			SimilarTaskData=new SimilartaskED(Data.GetBaseLog());
+			SimilarTaskData=new SimilartaskCC(Data.GetBaseLog());
 			SimilarTaskMatrix=SimilarTaskData.calculation();
 			ApplyValueThredhold(SimilarTaskMatrix,SimilarTaskData,Value);
-			SetSimilarTaskToShow();
+			SetSimilarTaskToShow(Data.GetBaseLog());
 
 		}
 
@@ -402,16 +467,13 @@ public class OLAPSocialTransformation {
 			}
 		}
 	}
+	
 	public String TranslateNode(Integer j)
 	{
 		return this.WorkingTogetherData.getOriginatorList().get(j);
 	}
 	
-	public void GetOriginatorList()
-	{
-		//for(int j=0;j<this.WorkingTogetherData.getOriginatorList().size();j++)
-		//	System.out.print("\n"+this.WorkingTogetherData.getOriginatorList().get(j));
-	}
+
 	
 	public void CleanMatrixToShow(DoubleMatrix2D matrix)
 	{
@@ -431,7 +493,38 @@ public class OLAPSocialTransformation {
 		}
 		
 	}
-		
+	
+	public SocialNetwork GenerateBaseSocialNetwork(String Analysist,XLog Log)
+	{
+		SocialNetwork generate;
+		cuteValue=0;
+		Relations= new HashMap<String,SocialRelation>();		
+		//WorkingTogetherDataToShow= new  WorkingtogetherSAR(Data.GetCurrentLog());
+		if(Analysist.equals("Working Together"))
+		{
+			WorkingtogetherSAR WorkingT= new  WorkingtogetherSAR(Log);
+			DoubleMatrix2D WorkingTMatrix=WorkingT.calculation();
+			generate=UtilOperation.generateSN(WorkingTMatrix, WorkingT.getOriginatorList());
+
+		}
+		else if(Analysist.equals("Similar Task"))
+		{
+			SimilartaskCC STData=new SimilartaskCC(Log);
+			DoubleMatrix2D STMatrix=STData.calculation();
+			generate=UtilOperation.generateSN(STMatrix, STData.getOriginatorList());
+
+
+		}
+		else
+		{
+			HandoverCCCDCM  HWData= new  HandoverCCCDCM(Log);
+		    DoubleMatrix2D  HaTMatrix=HWData.calculation();
+			generate=UtilOperation.generateSN(HaTMatrix, HWData.getOriginatorList());
+
+		}
+
+		return generate;
+	}
 	
 }
 
