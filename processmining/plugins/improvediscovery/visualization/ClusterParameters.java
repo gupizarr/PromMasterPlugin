@@ -52,11 +52,12 @@ public class ClusterParameters  extends JPanel{
     protected JPanel  ClusterMenuHeader;
     protected JLabel porcentaje;
     protected JLabel title;
-    protected Map<String,Boolean> eventClusterCaseAssign;
-	public ClusterParameters(OLAPTransformation Transformation) {
+    protected Map<String,MouseListener>  CaseEvents;
+    
+    public ClusterParameters(OLAPTransformation Transformation) {
 		// TODO Auto-generated constructor stub
 		this.DataTransformation=Transformation;
-		
+		CaseEvents= new HashMap<String,MouseListener>();
 		this.smallFont = new Font("11f", 12, 10);
 		 ClusteredgesConcurrencyActiveBox= new ArrayList<JCheckBox>();
 		 SubClusteredgesConcurrencyActiveBox= new ArrayList<JLabel>();
@@ -68,7 +69,6 @@ public class ClusterParameters  extends JPanel{
          this.setBackground(COLOR_BG2);
  		
          this.setOpaque(true);
-         eventClusterCaseAssign= new HashMap<String,Boolean>();
          this.setLayout(new BorderLayout());
  		 title= new JLabel("Select Number of clusters");
          AddHeader();
@@ -93,7 +93,7 @@ public class ClusterParameters  extends JPanel{
 	
 	public void CleanPanels()
 	{
-		 eventClusterCaseAssign= new HashMap<String, Boolean>();
+		 CaseEvents= new HashMap<String, MouseListener>();
 		 ClusteredgesConcurrencyActiveBox= new ArrayList<JCheckBox>();
 		 SubClusteredgesConcurrencyActiveBox= new ArrayList<JLabel>();
          JLabelClusterArray=new ArrayList();
@@ -161,7 +161,6 @@ public class ClusterParameters  extends JPanel{
 		for(int j=1;j<=DataTransformation.GetClusterTransformation().GetClusterData().GetNumberOfCase();j++ )
 		{
 			ClusteredgesConcurrencyActiveBox.add(new JCheckBox("Cluster "+j));
-			eventClusterCaseAssign.put(""+index, false);
 			numberOfClusters.addItem(j);
 			index++;
 		}
@@ -265,6 +264,7 @@ public class ClusterParameters  extends JPanel{
 			{
 				    number=c+1;
 					JCheckBox J= new JCheckBox("Case "+number);
+					J.setSelected(true);
 					J.setName(""+count+"-"+c);
 					ClustersCasesCheckBoxes.put(count+"-"+c ,J);
 			}
@@ -343,6 +343,9 @@ public class ClusterParameters  extends JPanel{
 				{
 					
 					label.setText("+");
+					for(int j=0;j<JLabelSubClusterArray.size();j++)
+						JLabelSubClusterArray.get(j).setText("+");
+					
 					option_panel.removeAll();							
 					option_panel.revalidate();
 					option_panel.repaint();
@@ -438,6 +441,7 @@ public class ClusterParameters  extends JPanel{
 		
 		for(int c=0;c<sub_check_boxes;c++)		
 		{
+			
 				JLabel label= JLabelSubClusterArray.get(index);				
 				JLabel name=SubClusteredgesConcurrencyActiveBox.get(index);
 		        JPanel cluster_panel= new JPanel();					
@@ -468,7 +472,8 @@ public class ClusterParameters  extends JPanel{
 				check.setForeground(COLOR_FG);
 				check.setFont(new Font("11f", 12, 10));
 				//edgesConcurrencyActiveBox.addItemListener(this);
-				check.setSelected(true);
+				
+				//check.setSelected(true);
 				check.setToolTipText("<html>This control select the clusters of the model" +"visualization</html>");
 				//check.setName(""+value);
 			
@@ -535,7 +540,7 @@ public class ClusterParameters  extends JPanel{
 					int number;
 					int check_cases=16;
 			
-					//SubClusteredgesConcurrencyActiveBox.length;
+					
 					for(int c=0;c<sub_check_boxes;c++)		
 					{
 

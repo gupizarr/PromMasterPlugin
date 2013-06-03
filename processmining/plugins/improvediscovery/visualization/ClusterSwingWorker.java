@@ -32,24 +32,27 @@ public class ClusterSwingWorker {
 			@Override
 			protected Boolean doInBackground() throws InterruptedException {
 		    	
-				 ShowAdviceFrame("Aggrupation Filter","The plugin is working");
+				 ShowAdviceFrame("Cluster Filter","The plugin is working");
 			   
 	             Transformation.RemoveClusterAndFilter(num);
 	             publish(10);
 	             //Transformation. RemoveTracesFromClusters(); 
 	             publish(20);
-	             int part=Transformation.GetData().GetBaseLog().size()/8;
+	             int part=Transformation.GetData().GetWorkingLog().size()/16;
+	             int sum_part=part;
 		         Transformation.GroupClusters();
 		         int value=20;
-	             for (int u=0; u<Transformation.GetData().GetBaseLog().size(); u++)
+	             for (int u=0; u<Transformation.GetData().GetWorkingLog().size(); u++)
 			     {
 		    	  Transformation.SearchTrace(Transformation.GetData().GetBaseLog().get(u));
-		    	  if(u==part)
+		    	  if(u==sum_part)
 		          {
-		    	  publish(value+10);
-		    	  value+=10;
-		    	  part=part+part;
+			      value+=5;
+		      	  publish(value);
+		    	  sum_part+=part;
+		          System.out.print("\n vamos en"+sum_part);
 		          }
+		    	  
 			     }         
 	             Transformation. UpdateForClusters();
 
@@ -69,10 +72,12 @@ public class ClusterSwingWorker {
 		         //frame.dispose();
 				}
 			} catch (InterruptedException e) {
-			     // This is thrown if the thread's interrupted.
+		           frame.dispose();
+		           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
 			    } catch (ExecutionException e) {
-			     // This is thrown if we throw an exception
-			     // from doInBackground.
+			           frame.dispose();
+			           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
+
 			    }
 			   }
 
@@ -100,26 +105,26 @@ public class ClusterSwingWorker {
 			@Override
 			protected Boolean doInBackground() throws InterruptedException {
 		    	
-				 ShowAdviceFrame("Aggrupation Filter","The plugin is working");
+				 ShowAdviceFrame("Group Filter","The plugin is working");
 				 Transformation.RestoreCluster(num);
 	             //Transformation. RemoveTracesFromClusters(); 
 	             publish(20);
-	             //int part=Transformation.GetClusterTransformation().GetClusterData().GetActivityClusters().get(Integer.parseInt(num)).size()/8;
-		         int part=Transformation.GetData().GetBaseLog().size()/8;
-	             Transformation.GroupClusters();
+	             int part=Transformation.GetData().GetWorkingLog().size()/16;
+	             int sum_part=part;
+		         Transformation.GroupClusters();
 		         int value=20;
-	             for (int u=0; u<Transformation.GetData().GetBaseLog().size(); u++)
+	             for (int u=0; u<Transformation.GetData().GetWorkingLog().size(); u++)
 			     {
-	            	 
 		    	  Transformation.SearchTrace(Transformation.GetData().GetBaseLog().get(u));
-		    	  
-		    	  if(u==part)
+		    	  if(u==sum_part)
 		          {
-		    	  publish(value+10);
-		    	  value+=10;
-		    	  part=part+part;
+		    	  value+=5;
+		      	  publish(value);
+		    	  sum_part+=part;
+		          System.out.print("\n vamos en"+sum_part);
 		          }
-			     }         
+		    	  
+			     }              
 	             Transformation. UpdateForClusters();
 
 	             return true;
@@ -175,9 +180,12 @@ public class ClusterSwingWorker {
 			percentage.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 			
 			JLabel title=new JLabel(messageText);
-			title.setFont(new Font("15f", 15, 20));
+			title.setFont(new Font("12f", 12, 20));
+			title.setHorizontalAlignment(JLabel.CENTER);
+			title.setHorizontalTextPosition(JLabel.CENTER);
+			title.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 
-			JLabel message=new JLabel("Wait Please");
+			JLabel message=new JLabel("Please wait");
 			message.setFont(new Font("15f", 15, 20));
 			message.setHorizontalAlignment(JLabel.CENTER);
 			message.setHorizontalTextPosition(JLabel.CENTER);
@@ -213,6 +221,12 @@ public class ClusterSwingWorker {
 			
 			@Override
 			protected Boolean doInBackground() throws InterruptedException {
+				  ShowAdviceFrame("Cluster calculation",
+			  "<html><br>This plugin is recalculating the clusters. <br>" +
+				  		"Maybe the Plugin stop in 60%, you have to <br>" +
+				  		"wait.If it is something wrong, you<br> " +
+				  		"will see on the parameters panel</html>");
+
 				   publish(1);
 				   Transformation.GetClusterTransformation().Step1();
 			       publish(40);
@@ -246,7 +260,7 @@ public class ClusterSwingWorker {
 						//AddClusterCheckEvents();
 					   MainPanel.AddSubClusterEvents();
 					   MainPanel.AddLabelsEvent();
-					   MainPanel.AddCheckBoxesClusterEvents();
+					   MainPanel.AddEventsAfterChangeNumberOfClusters();
 						
 					   //AddCheckBoxesClusterEvents();
 					   MainPanel.repaint();
@@ -323,10 +337,14 @@ public class ClusterSwingWorker {
 		         //frame.dispose();
 				}
 			} catch (InterruptedException e) {
+				frame.dispose();
+		           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
+
 			     // This is thrown if the thread's interrupted.
 			    } catch (ExecutionException e) {
-			     // This is thrown if we throw an exception
-			     // from doInBackground.
+					frame.dispose();
+			           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
+
 			    }
 			   }
 
@@ -379,10 +397,11 @@ public class ClusterSwingWorker {
 		         //frame.dispose();
 				}
 			} catch (InterruptedException e) {
-			     // This is thrown if the thread's interrupted.
+				frame.dispose();
+		           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
 			    } catch (ExecutionException e) {
-			     // This is thrown if we throw an exception
-			     // from doInBackground.
+					frame.dispose();
+			           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
 			    }
 			   }
 
@@ -452,10 +471,12 @@ public class ClusterSwingWorker {
 		         //frame.dispose();
 				}
 			} catch (InterruptedException e) {
-			     // This is thrown if the thread's interrupted.
+				frame.dispose();
+		           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
 			    } catch (ExecutionException e) {
-			     // This is thrown if we throw an exception
-			     // from doInBackground.
+					frame.dispose();
+			           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
+
 			    }
 			   }
 
@@ -525,10 +546,12 @@ public class ClusterSwingWorker {
 		         //frame.dispose();
 				}
 			} catch (InterruptedException e) {
-			     // This is thrown if the thread's interrupted.
+				frame.dispose();
+		           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
 			    } catch (ExecutionException e) {
-			     // This is thrown if we throw an exception
-			     // from doInBackground.
+					frame.dispose();
+			           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
+			    
 			    }
 			   }
 
@@ -599,10 +622,11 @@ public class ClusterSwingWorker {
 		         //frame.dispose();
 				}
 			} catch (InterruptedException e) {
-			     // This is thrown if the thread's interrupted.
+				frame.dispose();
+		           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
 			    } catch (ExecutionException e) {
-			     // This is thrown if we throw an exception
-			     // from doInBackground.
+					frame.dispose();
+			           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
 			    }
 			   }
 
@@ -672,9 +696,11 @@ public class ClusterSwingWorker {
 		         //frame.dispose();
 				}
 			} catch (InterruptedException e) {
-			     // This is thrown if the thread's interrupted.
+				frame.dispose();
+		           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
 			    } catch (ExecutionException e) {
-			     // This is thrown if we throw an exception
+					frame.dispose();
+			           MainPanel.ParametersPanel.add(MainPanel.GetLogWarning());
 			     // from doInBackground.
 			    }
 			   }

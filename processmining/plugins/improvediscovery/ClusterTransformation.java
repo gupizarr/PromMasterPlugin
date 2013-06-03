@@ -366,18 +366,16 @@ public void Step3()
 
 public void Step4()
 {
-	System.out.print("\n stem 4.1");
 	if ((substitutionScoreMap == null) || (!isSubstitutionScoreDerived && deriveSubstitutionScore)) {
 		substitutionScoreMap = indelSubstitutionMatrix.getSubstitutionScoreMap();
 		isSubstitutionScoreDerived = true;
 	}
-	System.out.print("\n stem 4.2");
 
 	if ((indelRightGivenLeftScoreMap == null) || (!isIndelScoreDerived && deriveIndelScore)) {
 		indelRightGivenLeftScoreMap = indelSubstitutionMatrix.getIndelRightGivenLeftScoreMap();
 		isIndelScoreDerived = true;
 	}
-	System.out.print("\n stem 4.3");
+	
 
 	traceAlignTransformer=  new MSA(encodingLength, //calculado en encodeLog
 									ClusterData.GetUniqueEncodedTraceList(), //calculado en encodeLog
@@ -388,8 +386,6 @@ public void Step4()
 									ClusterData.getScaleFactor(), // viene dato idem anterior
 									ClusterData.GetGapPenalty(), // viene dado 
 									1.2f);
-	System.out.print("\n stem 4.4");
-
 }
 
 public void Step5()

@@ -135,7 +135,7 @@ public class OLAPDiscoveryPanel extends JComponent  {
         ButtonPanel.add(ResetButton());
         ButtonPanel.add(FullScreen());
         
-        JCheckBox j= new JCheckBox("Kept always the original model");
+        JCheckBox j= new JCheckBox("Show always the original model");
         j.setSelected(false);
         j.setOpaque(false);
         j.setUI(new SlickerCheckBoxUI());
@@ -386,7 +386,6 @@ public class OLAPDiscoveryPanel extends JComponent  {
 					if(Transformation.GetData().GetCurrentLog().size()>3)
 					{
 					ParametersPanel.mainClusterParameters.remove(LogWarning);
-					clusterSwingWorker.ShowAdviceFrame("Cluster calculation","This plugin is recalculating the clusters");
 					clusterSwingWorker.LoadClusterSwingWorker();
 					AddClusterCheckEvents();
 					AddSubClusterEvents();
@@ -597,7 +596,6 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	
 	public void LabelMouseListenerAction(JLabel label)
 	{
-		System.out.print("\n Label:"+ label.getName());
 
 		label.addMouseListener(new MouseListener(){
 
@@ -609,60 +607,26 @@ public class OLAPDiscoveryPanel extends JComponent  {
 				JLabel label= (JLabel) arg0.getComponent();
 				
 				value= Integer.parseInt(label.getName());
-
-				if(label.getText().equals("-") && !ParametersPanel.mainClusterParameters.eventClusterCaseAssign.get(""+value))
+				
+				if(label.getText().equals("-"))
 				{
 						if(Transformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(value)<15)
-							
 						{
-							
+
 						   Map<String,JCheckBox> MapCase=ParametersPanel.mainClusterParameters.ClustersCasesCheckBoxes;
 
 						   for(int c=0;c<Transformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(value);c++)
 						   {        
 
 							   key=value+"-"+c;
-							   System.out.print("\n evento for: "+value+"-"+c);
-							   MapCase.get(key).addMouseListener(new MouseListener(){
-								   
-								public void mouseClicked(MouseEvent e) {}
-								public void mouseEntered(MouseEvent e) {}
-								public void mouseExited(MouseEvent e) {}
-								public void mousePressed(MouseEvent e) {
-									
-									//Buscar el name correcto para el CASE
-									JCheckBox check=(JCheckBox) e.getComponent();
-									int caseIndex= Integer.parseInt(
-									check.getName().substring(check.getName().indexOf("-")+1));
-									
-									int value=Integer.parseInt(
-									check.getName().substring(0,check.getName().indexOf("-")));					          
-				    				if(check.isSelected())
-									{// se selecciono para borrarlo
-										redrawGraphWithTraces(value,caseIndex,true);
-									}
-									else
-									{	
-							
-										redrawGraphWithTraces(value,caseIndex,false);
-									}
-								}
-								public void mouseReleased(MouseEvent e) {}
-							   
-							   });
+							   if(ParametersPanel.mainClusterParameters.CaseEvents.get(key)==null)
+							   {
+							   MouseListener Ml= CaseMouseListener();
+							   MapCase.get(key).addMouseListener(Ml);
+							   ParametersPanel.mainClusterParameters.CaseEvents.put(key,Ml);
+							   }
 						   }
-							for(int c=0;c<ParametersPanel.mainClusterParameters.JLabelSubClusterArray.size();c++)
-							{
-						 		label=ParametersPanel.mainClusterParameters.JLabelSubClusterArray.get(c);
-						 		
-							}
 						}
-						else
-						{
-						}
-						
-						ParametersPanel.mainClusterParameters.eventClusterCaseAssign.remove(""+value);
-				 		ParametersPanel.mainClusterParameters.eventClusterCaseAssign.put(""+value,true);
 				}
 				else
 				{
@@ -678,6 +642,36 @@ public class OLAPDiscoveryPanel extends JComponent  {
 	
 	}
 	
+	public MouseListener CaseMouseListener()
+	{
+		return new MouseListener(){
+			
+			public void mouseClicked(MouseEvent e) {}
+			public void mouseEntered(MouseEvent e) {}
+			public void mouseExited(MouseEvent e) {}
+			public void mousePressed(MouseEvent e) {
+				
+				//Buscar el name correcto para el CASE
+				JCheckBox check=(JCheckBox) e.getComponent();
+				int caseIndex= Integer.parseInt(
+				check.getName().substring(check.getName().indexOf("-")+1));
+				
+				int value=Integer.parseInt(
+				check.getName().substring(0,check.getName().indexOf("-")));					          
+				if(check.isSelected())
+				{// se selecciono para borrarlo
+					redrawGraphWithTraces(value,caseIndex,true);
+				}
+				else
+				{	
+		
+					redrawGraphWithTraces(value,caseIndex,false);
+				}
+			}
+			public void mouseReleased(MouseEvent e) {}
+	
+		   };
+	}
 	public void LabelMouseListenerSubCluster(JLabel label)
 	{
 		label.addMouseListener(new MouseListener(){
@@ -690,46 +684,24 @@ public class OLAPDiscoveryPanel extends JComponent  {
 				JLabel label= (JLabel) arg0.getComponent();		
 			    value=Integer.parseInt(label.getName());
 
-				if(label.getText().equals("-") && !ParametersPanel.mainClusterParameters.eventClusterCaseAssign.get(""+value))
+				if(label.getText().equals("-"))
 				{
 									
 						   Map<String,JCheckBox> MapCase=ParametersPanel.mainClusterParameters.ClustersCasesCheckBoxes;
 						   for(int c=0;c<Transformation.GetClusterTransformation().GetClusterData().GetNumberOfCaseOnCluster(value);c++)
 						   {        
 							   key=value+"-"+c;
-							   System.out.print("\n evento for: "+value+"-"+c);
 
-							   MapCase.get(key).addMouseListener(new MouseListener(){
-	
-								public void mouseClicked(MouseEvent e) {}
-								public void mouseEntered(MouseEvent e) {}
-								public void mouseExited(MouseEvent e) {}
-								public void mousePressed(MouseEvent e) {
-									
-									//Buscar el name correcto para el CASE
-									JCheckBox check=(JCheckBox) e.getComponent();
-									int caseIndex= Integer.parseInt(
-									check.getName().substring(check.getName().indexOf("-")+1));
-									
-									int value=Integer.parseInt(
-									check.getName().substring(0,check.getName().indexOf("-")));					          
-				    				if(check.isSelected())
-									{// se selecciono para borrarlo
-										redrawGraphWithTraces(value,caseIndex,true);
-									}
-									else
-									{	
-							
-										redrawGraphWithTraces(value,caseIndex,false);
-									}
-								}
-								public void mouseReleased(MouseEvent e) {}
-						
-							   });
+							   
+							   if(ParametersPanel.mainClusterParameters.CaseEvents.get(key)==null)
+							   {
+
+							   MouseListener Ml= CaseMouseListener();
+							   MapCase.get(key).addMouseListener(Ml);
+							   ParametersPanel.mainClusterParameters.CaseEvents.put(key,Ml);
+							   }
 						   }
-							ParametersPanel.mainClusterParameters.eventClusterCaseAssign.remove(""+value);
-					 		ParametersPanel.mainClusterParameters.eventClusterCaseAssign.put(""+value,true);
-
+					
 				}
 			}
 
@@ -746,22 +718,11 @@ public class OLAPDiscoveryPanel extends JComponent  {
  		JLabel label;
 		for(int j=0;j<ParametersPanel.mainClusterParameters.JLabelClusterArray.size();j++)
 	 	{
-
 	 		label=ParametersPanel.mainClusterParameters.JLabelClusterArray.get(j);
 	 	    LabelMouseListenerAction(label);
 	 		LabelMouseListenerSubCluster(label);
 	 
-	 	}
-		
-		/*
-		for(int c=0;c<ParametersPanel.mainClusterParameters.JLabelSubClusterArray.size();c++)
-		{
-
-	 		label=ParametersPanel.mainClusterParameters.JLabelSubClusterArray.get(c);
-	 		LabelMouseListenerSubCluster(label);
-		}
-		*/
-		
+	 	}	
 	}
 	
 	
@@ -981,13 +942,17 @@ public class OLAPDiscoveryPanel extends JComponent  {
 			public void mousePressed(MouseEvent e) {
 				
 				JCheckBox check=(JCheckBox) e.getComponent();
-				if(check.isSelected())
+				if(check.isSelected() && ParametersPanel.mainClusterParameters.option_panel.getComponentCount()==0)
 				{// se selecciono para borrarlo
 				redrawGraphWithClusters(check.getName(),true);
 				}
-				else
+				else if(ParametersPanel.mainClusterParameters.option_panel.getComponentCount()==0)
 				{	
 				redrawGraphWithClusters(check.getName(),false);
+				}
+				else if(check.isSelected())
+				{
+					check.setSelected(false);
 				}
 			}
 			public void mouseReleased(MouseEvent e) {
@@ -996,12 +961,13 @@ public class OLAPDiscoveryPanel extends JComponent  {
     	}
 	}
 	
-	public void AddCheckBoxesClusterEvents()
+	public void AddEventsAfterChangeNumberOfClusters()
 	{
 	 	ParametersPanel.mainClusterParameters.numberOfClusters.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				Transformation.ClearRemovedClusters();
 				Transformation.BuiltHeuristic();
+				ParametersPanel.mainClusterParameters.CaseEvents.clear();
 				//ParametersPanel.mainClusterParameters.RestoreSelects();
 				ParametersPanel.mainClusterParameters.AddClustersParameters(false);
 				Transformation.GetData().ReturnToBaseLog();
